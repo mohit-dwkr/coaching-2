@@ -43,79 +43,107 @@ export default function StudyMaterialSection() {
     getInitialSession();
 
     // 2. Listen for auth changes (jaise hi Magic Link se login ho)
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user?.email) {
-        checkAccess(session.user.email);
+   const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session?.user?.email) {
+
+    const email = session.user.email;
+
+    // 🔍 check existing
+    const { data: existing } = await supabase
+      .from('student_approvals')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
+
+    // 🔥 INSERT ONLY AFTER VERIFY
+    if (!existing) {
+      const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
+
+      await supabase.from('student_approvals').insert([{
+        email,
+        name: savedForm.name,
+        mobile: savedForm.mobile,
+        class: savedForm.class,
+        status: 'pending'
+      }]);
+
+      // ✅ ALERT ONLY ONCE
+      if (!localStorage.getItem("email_verified")) {
+        alert("✅ Email verified successfully!");
+        localStorage.setItem("email_verified", "true");
       }
-    });
+    }
+
+    checkAccess(email);
+  }
+});
 
     return () => authListener.subscription.unsubscribe();
   }, []);
 
   // checkAccess function ko 'mobile' ki jagah 'email' se update karein
-  const checkAccess = async (email: string) => {
-    try {
-      setIsCheckingAccess(true);
-      const { data, error } = await supabase
-        .from('student_approvals')
-        .select('status')
-        .eq('email', email) // 'mobile' filter ko 'email' se replace kiya
-        .single();
+ const checkAccess = async (email: string) => {
+  try {
+    setIsCheckingAccess(true);
 
-      if (data) {
-        setAccessStatus(data.status);
-        localStorage.setItem("student_email", email);
-        if (data.status === 'approved') {
-          fetchContent();
-        }
-      }
-    } catch (err) {
-      console.error("Access Check Error:", err);
-    } finally {
-      setIsCheckingAccess(false);
+    const { data, error } = await supabase
+      .from('student_approvals')
+      .select('status')
+      .eq('email', email)
+      .maybeSingle();
+
+    // 🔥 IMPORTANT FIX
+    if (error) {
+      console.error("Supabase Error:", error);
+      setAccessStatus(null);
+      return;
     }
-  };
+
+    if (data) {
+      setAccessStatus(data.status);
+      localStorage.setItem("student_email", email);
+
+      if (data.status === 'approved') {
+        fetchContent();
+      }
+    } else {
+      setAccessStatus(null);
+    }
+
+  } catch (err) {
+    console.error("Access Check Error:", err);
+  } finally {
+    setIsCheckingAccess(false);
+  }
+};
 
   // --- Logic 2: Handle Form Submit (Updated for Magic Link) ---
   const handleRequestAccess = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    try {
-      // 1. Supabase Auth se Magic Link bhejna
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: studentForm.email, // Form mein email field add karni hogi
-        options: {
-          emailRedirectTo: window.location.origin, // Link pe click karne ke baad student yahan wapas aayega
-        },
-      });
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: studentForm.email,
+      options: {
+        emailRedirectTo: window.location.origin + "/study-material",
+      },
+    });
 
-      if (authError) throw authError;
+    if (error) throw error;
 
-      // 2. Details ko 'student_approvals' table mein save/upsert karna
-      const { error: dbError } = await supabase
-        .from('student_approvals')
-        .upsert([{
-          email: studentForm.email,
-          name: studentForm.name,
-          mobile: studentForm.mobile,
-          class: studentForm.class,
-          status: 'pending'
-        }], { onConflict: 'email' }); // Agar email pehle se hai toh sirf data update hoga
+    // ✅ SAVE DATA (IMPORTANT)
+    localStorage.setItem("student_form", JSON.stringify(studentForm));
+    localStorage.setItem("student_email", studentForm.email);
 
-      if (dbError) throw dbError;
+    alert("📩 Check your email for login link!");
 
-      // Browser mein email save kar lena taaki status check ho sake
-      localStorage.setItem("student_email", studentForm.email);
-      setAccessStatus('pending');
-      alert("Check your email! We've sent you a login link.");
-
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } catch (err: any) {
+    alert("Error: " + err.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // --- Logic 3: Your Existing Fetch Function ---
   async function fetchContent() {
@@ -177,10 +205,18 @@ export default function StudyMaterialSection() {
         <Button
           variant="outline"
           className="mt-8 border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-8 rounded-full"
-          onClick={() => {
-            localStorage.removeItem("student_mobile"); // Browser se data delete
-            setAccessStatus(null); // State reset taaki form dikhe
-            setStudentForm({ name: "", class: "", mobile: "", email: "" }); // Form fields khali
+           onClick={async () => {
+          // 🔥 logout user
+          await supabase.auth.signOut();
+
+          // 🔥 clear all stored data
+          localStorage.removeItem("student_email");
+          localStorage.removeItem("student_form");
+          localStorage.removeItem("email_verified");
+
+          // 🔥 reset state
+          setAccessStatus(null);
+          setStudentForm({ name: "", class: "", mobile: "", email: "" });
           }}
         >
           Try Again
@@ -198,8 +234,8 @@ export default function StudyMaterialSection() {
           <Clock size={60} />
         </div>
         <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Approval Pending</h2>
-        <p className="text-slate-500 max-w-sm mt-3 font-medium">A"Your request has been submitted. Once approved by the admin, all materials will be visible here."</p>
-        <Button onClick={() => checkAccess(localStorage.getItem("student_mobile") || "")} className="mt-8 bg-yellow-500 hover:bg-yellow-600 px-10 rounded-full font-bold h-12">
+        <p className="text-slate-500 max-w-sm mt-3 font-medium">"Your request has been submitted. Once approved by the admin, all materials will be visible here."</p>
+        <Button onClick={() => checkAccess(localStorage.getItem("student_email") || "")} className="mt-8 bg-yellow-500 hover:bg-yellow-600 px-10 rounded-full font-bold h-12">
           Check Status Again
         </Button>
       </div>
