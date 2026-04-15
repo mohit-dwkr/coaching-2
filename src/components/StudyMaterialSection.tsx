@@ -44,8 +44,8 @@ export default function StudyMaterialSection() {
         .maybeSingle();
 
       // 🔥 INSERT ONLY AFTER VERIFY (IMPORTANT FIX)
-      if (!existing) {
-        const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
+      const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
+      if (!existing && savedForm?.email === email) {
 
         if (savedForm?.email) {
           await supabase.from('student_approvals').insert([{
