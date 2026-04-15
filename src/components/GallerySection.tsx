@@ -35,14 +35,14 @@ export default function GallerySection() {
 
   if (loading) {
     return (
-      <div className="py-20 flex justify-center items-center">
+      <div className=" flex justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-   <section id="gallery" className="py-24 bg-white relative overflow-hidden">
+   <section id="gallery" className="py-10 bg-white relative overflow-hidden">
   {/* Background Decoration to match other sections */}
   <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -z-10" />
   
@@ -53,7 +53,7 @@ export default function GallerySection() {
       viewport={{ once: true }}
       className="text-center mb-16"
     >
-      <div className="inline-block px-4 py-1.5 rounded-full bg-yellow-400 text-white text-[10px] font-black tracking-[0.2em] uppercase mb-4 border border-primary/20">
+      <div className="inline-block px-4 py-1.5 rounded-full bg-blue-500 text-white text-[10px] font-black tracking-[0.2em] uppercase mb-4 border border-primary/20">
         Inside Academy
       </div>
       <h2 className="text-3xl md:text-6xl font-black text-gray-900 tracking-tight mt-4">

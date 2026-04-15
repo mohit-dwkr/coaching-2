@@ -4,9 +4,9 @@ import { QrCode, Smartphone, Copy, CheckCircle, MessageCircle } from 'lucide-rea
 const Payment = () => {
   // Aap apni details yahan update kar sakte hain
   const paymentDetails = {
-    upiId: "nehabhanu@icici",
-    phone: "+91 88783 64974",
-    whatsappNumber: "919876543210",
+    upiId: "9630955951@axl",
+    phone: "+91 9630955951",
+    whatsappNumber: "919630955951",
     qrImageUrl: "/qr-code.jpeg" // Demo QR
   };
 

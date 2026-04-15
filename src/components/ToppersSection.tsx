@@ -34,14 +34,14 @@ export default function ToppersSection() {
 
   if (loading) {
     return (
-      <div className="py-20 flex justify-center items-center">
+      <div className=" flex justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <section id="results" className="py-24 bg-white relative overflow-hidden">
+    <section id="results" className="py-36 bg-white relative overflow-hidden">
       {/* Decorative Achievement background */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-5 pointer-events-none -z-10">
         <div className="absolute top-20 left-10 w-64 h-64 bg-yellow-400 rounded-full blur-[120px]" />

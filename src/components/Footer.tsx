@@ -14,12 +14,12 @@ export default function Footer() {
             <div className="flex items-center justify-center sm:justify-start gap-2 font-bold text-xl text-white">
               <div className="bg- p-1.5 rounded-lg">
                 <img
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Logo"
             className="h-8 w-8 md:h-10 md:w-10 object-contain rounded-full border-2 border-black flex-shrink-0"
           />
               </div>
-              Harikamlansh Academy
+              Toppers Academy
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto sm:mx-0">
               Empowering students to achieve their academic goals through quality education and expert mentorship since 1985.
@@ -64,11 +64,11 @@ export default function Footer() {
               </li>
               <li className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
                 <Phone className="h-5 w-5 text-primary shrink-0" />
-                <a href="tel:+919876543210" className="text-slate-400 hover:text-white">+91 7999627559</a>
+                <a href="tel:+919876543210" className="text-slate-400 hover:text-white">+91 9630955951</a>
               </li>
               <li className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
                 <Mail className="h-5 w-5 text-primary shrink-0" />
-                <a href="mailto:samarpratapshri98@gmail.com" className="text-slate-400 hover:text-white">samarpratapshri98@gmail.com</a>
+                <a href="mailto:samarpratapshri98@gmail.com" className="text-slate-400 hover:text-white">diwakarmohit0007@gmail.com</a>
               </li>
             </ul>
           </div>
@@ -78,7 +78,7 @@ export default function Footer() {
         {/* Bottom Bar: Mobile par stack, Desktop par space-between */}
         <div className="border-t border-slate-800 mt-10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-[11px] md:text-sm text-sm" >
           <p className="text-white text-center md:text-left">
-            © {currentYear} Harikamlansh Academy. All rights reserved by harikamlansh academy  <br /><span className="text-xs md:text-xs py-2 text-gray-400"> Developed by {" "}
+            © {currentYear} Toppers Academy. All rights reserved by Toppers academy  <br /><span className="text-xs md:text-xs py-2 text-gray-400"> Developed by {" "}
   <a
     href="https://wa.me/919630955951"
     target="_blank"

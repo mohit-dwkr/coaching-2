@@ -9,13 +9,13 @@ import ContactSection from "@/components/ContactSection";
 import Testimonials from "@/components/Testimonials";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Footer from "@/components/Footer";
-import HomeScrollingSection from "../components/HomeScrollingSection";
+// import HomeScrollingSection from "../components/HomeScrollingSection";
 
 const Index = () => (
   <>
     <Navbar />
     <HeroSection />
-    <HomeScrollingSection/>
+    {/* <HomeScrollingSection/> */}
     <BatchCards />
     <FacultySection />
     <ToppersSection />

@@ -45,7 +45,7 @@ export default function HeroSection() {
 
       return (
         <span key={index}>
-          <span className={isHighlighted ? "text-yellow-400" : ""}>
+          <span className={isHighlighted ? "text-blue-600" : ""}>
             {word}
           </span>
           {index !== words.length - 1 && " "}
@@ -106,10 +106,10 @@ export default function HeroSection() {
 
                 {/* Buttons: Full width on mobile, auto on desktop */}
                 <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full md:w-auto justify-center md:justify-start">
-                  <Button size="lg" className="bg-yellow-400 hover:bg-yellow-500 text-white text-lg w-full md:w-auto py-6" asChild>
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white text-lg w-full md:w-auto py-6" asChild>
                     <a href="#contact">Apply for Admission</a>
                   </Button>
-                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-blue-400 hover:text-black w-full md:w-auto py-6" asChild>
+                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/85 hover:text-black w-full md:w-auto py-6" asChild>
                     <a href="#batches">Explore Batches</a>
                   </Button>
                 </div>

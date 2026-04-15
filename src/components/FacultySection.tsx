@@ -30,7 +30,7 @@ export default function FacultySection() {
 
   if (loading) {
     return (
-      <div className="py-20 flex justify-center items-center">
+      <div className=" flex justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -54,7 +54,7 @@ export default function FacultySection() {
           <motion.span
             initial={{ opacity: 0, scale: 0.5 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            className="px-4 py-1.5 rounded-full bg-yellow-400 text-white text-[10px] font-black tracking-widest uppercase mb-4 inline-block shadow-lg shadow-primary/20"
+            className="px-4 py-1.5 rounded-full bg-blue-500 text-white text-[10px] font-black tracking-widest uppercase mb-4 inline-block shadow-lg shadow-primary/20"
           >
             World-Class Mentors
           </motion.span>
@@ -113,10 +113,10 @@ export default function FacultySection() {
 
                 {/* Info Area */}
                 <div className="pt-6 pb-4 px-4 text-center">
-                  <h3 className="text-xl font-black text-gray-800 tracking-tight mb-1 group-hover:text-yellow-400 transition-colors">
+                  <h3 className="text-xl font-black text-gray-800 tracking-tight mb-1 group-hover:text-blue-600 transition-colors">
                     {f.name}
                   </h3>
-                  <p className="text-yellow-500 text-xs font-black uppercase tracking-[0.15em] opacity-80">
+                  <p className="text-blue-600 text-xs font-black uppercase tracking-[0.15em] opacity-80">
                     {f.subject}
                   </p>
 

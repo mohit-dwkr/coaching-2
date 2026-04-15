@@ -72,7 +72,7 @@ export default function ContactSection() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-wider text-white uppercase bg-yellow-400 rounded-full">
+          <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-wider text-white uppercase bg-blue-500 rounded-full">
             Admission Open 2026-27
           </span>
           <h2 className="text-3xl md:text-6xl font-extrabold text-slate-900 tracking-tight">
@@ -121,7 +121,7 @@ export default function ContactSection() {
                   className="w-full p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
                 >
                   <option value="">Select Class/Courses</option>
-                  <option value="school">School Classes (5th - 8th)</option>
+                  <option value="school">School Classes (5th - 12th)</option>
                   <option value="competitive">Competitive Exams</option>
                 </select>
 
@@ -136,7 +136,7 @@ export default function ContactSection() {
                       className="p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none"
                     >
                       <option value="">Select Class</option>
-                      {[5,6,7,8].map(num => (
+                      {[5,6,7,8,9,10,11,12].map(num => (
                         <option key={num} value={num}>{num}th Standard</option>
                       ))}
                     </select>
@@ -232,7 +232,7 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">Call Support</p>
-                  <p className="text-sm font-semibold text-slate-800">+91 7999627559</p>
+                  <p className="text-sm font-semibold text-slate-800">+91 9630955951</p>
                 </div>
               </div>
 
@@ -242,7 +242,7 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">Mail Inquiry</p>
-                  <p className="text-sm font-semibold text-slate-800">samarpratapshri98@gmail.com</p>
+                  <p className="text-sm font-semibold text-slate-800">diwakarmohit0007@gmail.com</p>
                 </div>
               </div>
             </div>

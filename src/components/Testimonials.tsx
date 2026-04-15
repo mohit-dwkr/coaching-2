@@ -31,16 +31,16 @@ const testimonials: Testimonial[] = [
 
 const Testimonials: React.FC = () => {
   return (
-    <section className="py-24 bg-slate-50/30 overflow-hidden">
+    <section className="py-36 bg-slate-50/30 overflow-hidden">
       <div className="container mx-auto px-6">
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <span className="inline-block px-4 py-1.5 mb-4 text-[11px] font-black tracking-[0.2em] text-white uppercase bg-yellow-400 rounded-full">
+          <span className="inline-block px-4 py-1.5 mb-4 text-[11px] font-black tracking-[0.2em] text-white uppercase bg-blue-500 rounded-full">
             Testimonials
           </span>
           <h2 className="text-3xl md:text-5xl font-black text-slate-900 ">
-            What <span className="text-blue-500 italic font-serif">Parents</span> Say
+            What <span className="text-blue-600 italic font-serif">Parents</span> Say
           </h2>
          
         </div>
@@ -133,7 +133,7 @@ const Testimonials: React.FC = () => {
           <button
             className="flex items-center gap-4 bg-blue-600 text-white px-4 py-2 mt-2
              rounded-full font-bold hover:bg-blue-700 transition-all group shadow-2xl shadow-slate-200 active:scale-95"
-            onClick={() => window.open('https://www.google.com/maps/place/Navodaya+coaching/@25.6600345,78.4500277,17z/data=!3m1!4b1!4m6!3m5!1s0x397713043d171677:0xf0b3679d7c749e62!8m2!3d25.6600345!4d78.4526026!16s%2Fg%2F11s460h43_?entry=ttu&g_ep=EgoyMDI2MDMyMi4wIKXMDSoASAFQAw%3D%3D', '_blank')}
+            onClick={() => window.open('https://www.google.com/', '_blank')}
           >
             <div className="bg-white p-1 rounded-full">
               <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" className="w-5 h-5" alt="G" />

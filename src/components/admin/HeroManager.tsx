@@ -206,7 +206,7 @@ export default function HeroManager() {
               {/* Highlight Word Input - NEW FIELD */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold flex items-center gap-2">
-                  <Highlighter className="w-4 h-4 text-yellow-500" /> Word to Highlight (Yellow Color)
+                  <Highlighter className="w-4 h-4 text-blue-700" /> Word to Highlight (blue Color)
                 </label>
                 <Input 
                   value={form.highlight_word} 

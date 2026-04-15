@@ -31,7 +31,7 @@ export default function BatchCards() {
 
   if (loading) {
     return (
-      <div className="py-20 flex justify-center items-center">
+      <div className=" flex justify-center items-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -44,7 +44,7 @@ const nextYear = currentYear + 1;
 const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
 
   return (
-    <section id="batches" className="relative py- mt- bg-[#f8faff] overflow-hidden">
+    <section id="batches" className="relative py-56 pb-20 bg-[#f8faff] overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
         <div className="absolute top-0 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
@@ -58,7 +58,7 @@ const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-yellow-400 text-white text-sm font-bold mb-6 border border-blue-500 shadow-sm transition-all hover:bg-yellow-500">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-blue-500 text-white text-sm font-bold mb-6 border border-blue-500 shadow-sm transition-all hover:bg-blue-600">
   {/* Live Blinking Dot */}
   <span className="relative flex h-2.5 w-2.5">
     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
@@ -71,7 +71,7 @@ const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
   
   <Sparkles className="w-4 h-4 animate-pulse" />
 </div>
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">
             Our <span className=" text-blue-600">Premium Batches</span>
           </h2>
           <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-sm md:text-lg leading-relaxed">
@@ -102,7 +102,7 @@ const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
         <div className="flex justify-between items-center mb-8 relative z-10">
           <div className="relative">
             <div className="absolute inset-0 bg-primary blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
-            <div className="relative px-6 py-2 rounded-2xl bg-blue-700 text-white text-[12px] font-black tracking-[0.2em] md:uppercase shadow-">
+            <div className="relative px-6 py-2 rounded-2xl bg-black text-white text-[12px] font-black tracking-[0.2em] md:uppercase shadow-sm">
                {b.class_name}
             </div>
           </div>
@@ -115,14 +115,14 @@ const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
         </div>
 
         {/* Title */}
-        <h3 className="relative z-10 text-xl font-black text-gray-800 mb-6 tracking-tight group-hover:text-yellow-400 transition-colors duration-300">
-          <span className="text-sm font-medium">eligibility - </span>{b.subjects}
+        <h3 className="relative z-10 text-xl font-black text-gray-800 mb-6 tracking-tight group-hover:text-blue-600 transition-colors duration-300">
+          <span className="text-sm font-medium">Subject - </span>{b.subjects}
         </h3>
 
         {/* Info Blocks */}
         <div className="relative z-10 space-y-4 mb-10">
           <div className="flex items-center gap-4 p-4 rounded-[1.5rem] bg-white/50 border border-white shadow-sm group-hover:shadow-md transition-all duration-300">
-            <div className="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
               <Clock className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
@@ -152,7 +152,7 @@ const academicSession = `${currentYear}-${nextYear.toString().slice(-2)}`;
 
         {/* CTA Button */}
         <Button 
-          className="relative z-10 w-full h-16 rounded-[1.5rem] bg-blue-700 hover:bg-yellow-500 text-white font-black text-lg shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-primary/40 transition-all duration-500 group-hover:scale-[1.03] active:scale-95" 
+          className="relative z-10 w-full h-16 rounded-[1.5rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-primary/40 transition-all duration-500 group-hover:scale-[1.03] active:scale-95" 
           asChild
         >
           <a href="#contact" className="flex items-center justify-center gap-3">

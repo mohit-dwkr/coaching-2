@@ -10,41 +10,63 @@ export default function StudyMaterialSection() {
   const [accessStatus, setAccessStatus] = useState<string | null>(null); // 'pending', 'approved', 'denied', or null
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [studentForm, setStudentForm] = useState({ name: "", mobile: "", class: "" });
+  const [studentForm, setStudentForm] = useState({ name: "", class: "", mobile: "", email: "" });
 
   // --- Your Existing States ---
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [showMorePdfs, setShowMorePdfs] = useState(false); 
+  const [showMorePdfs, setShowMorePdfs] = useState(false);
   const [videos, setVideos] = useState<any[]>([]);
   const [showAllVideos, setShowAllVideos] = useState(false);
 
-  // --- Logic 1: Check Access First ---
+  // --- Logic 1: Check Access First (Updated for Auth Session) ---
   useEffect(() => {
-    const savedMobile = localStorage.getItem("student_mobile");
-    if (savedMobile) {
-      checkAccess(savedMobile);
-    } else {
-      setIsCheckingAccess(false);
-    }
+    const getInitialSession = async () => {
+      // 1. Check if user is already logged in via Supabase Auth
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user?.email) {
+        checkAccess(session.user.email);
+      } else {
+        // Agar session nahi hai, toh purana email check karo (pending status ke liye)
+        const savedEmail = localStorage.getItem("student_email");
+        if (savedEmail) {
+          checkAccess(savedEmail);
+        } else {
+          setIsCheckingAccess(false);
+        }
+      }
+    };
+
+    getInitialSession();
+
+    // 2. Listen for auth changes (jaise hi Magic Link se login ho)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.email) {
+        checkAccess(session.user.email);
+      }
+    });
+
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
-  const checkAccess = async (mobile: string) => {
+  // checkAccess function ko 'mobile' ki jagah 'email' se update karein
+  const checkAccess = async (email: string) => {
     try {
       setIsCheckingAccess(true);
       const { data, error } = await supabase
         .from('student_approvals')
         .select('status')
-        .eq('mobile', mobile)
+        .eq('email', email) // 'mobile' filter ko 'email' se replace kiya
         .single();
 
       if (data) {
         setAccessStatus(data.status);
-        localStorage.setItem("student_mobile", mobile);
+        localStorage.setItem("student_email", email);
         if (data.status === 'approved') {
-          fetchContent(); // Sirf approved hone par data fetch karega
+          fetchContent();
         }
       }
     } catch (err) {
@@ -54,20 +76,40 @@ export default function StudyMaterialSection() {
     }
   };
 
-  // --- Logic 2: Handle Form Submit ---
+  // --- Logic 2: Handle Form Submit (Updated for Magic Link) ---
   const handleRequestAccess = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     try {
-      const { error } = await supabase.from('student_approvals').insert([studentForm]);
-      if (error) {
-        if (error.code === '23505') {
-          checkAccess(studentForm.mobile);
-        } else throw error;
-      } else {
-        localStorage.setItem("student_mobile", studentForm.mobile);
-        setAccessStatus('pending');
-      }
+      // 1. Supabase Auth se Magic Link bhejna
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: studentForm.email, // Form mein email field add karni hogi
+        options: {
+          emailRedirectTo: window.location.origin, // Link pe click karne ke baad student yahan wapas aayega
+        },
+      });
+
+      if (authError) throw authError;
+
+      // 2. Details ko 'student_approvals' table mein save/upsert karna
+      const { error: dbError } = await supabase
+        .from('student_approvals')
+        .upsert([{
+          email: studentForm.email,
+          name: studentForm.name,
+          mobile: studentForm.mobile,
+          class: studentForm.class,
+          status: 'pending'
+        }], { onConflict: 'email' }); // Agar email pehle se hai toh sirf data update hoga
+
+      if (dbError) throw dbError;
+
+      // Browser mein email save kar lena taaki status check ho sake
+      localStorage.setItem("student_email", studentForm.email);
+      setAccessStatus('pending');
+      alert("Check your email! We've sent you a login link.");
+
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -114,7 +156,7 @@ export default function StudyMaterialSection() {
     setSelectedClass(c);
     const firstSubject = materials.find(m => m.student_class === c)?.subject;
     setSelectedSubject(firstSubject ?? "");
-    setShowMorePdfs(false); 
+    setShowMorePdfs(false);
   };
   const filtered = materials.filter(m => m.student_class === selectedClass && m.subject === selectedSubject);
   const visiblePdfs = showMorePdfs ? filtered : filtered.slice(0, 6);
@@ -132,13 +174,13 @@ export default function StudyMaterialSection() {
         <h2 className="text-3xl font-black text-slate-800 uppercase">Access Revoked</h2>
         <p className="text-slate-500 max-w-md mt-2 font-medium">"Your access has been revoked. Please contact the academy for further information.</p>
 
-<Button 
+        <Button
           variant="outline"
           className="mt-8 border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-8 rounded-full"
           onClick={() => {
             localStorage.removeItem("student_mobile"); // Browser se data delete
             setAccessStatus(null); // State reset taaki form dikhe
-            setStudentForm({ name: "", mobile: "", class: "" }); // Form fields khali
+            setStudentForm({ name: "", class: "", mobile: "", email: "" }); // Form fields khali
           }}
         >
           Try Again
@@ -165,95 +207,131 @@ export default function StudyMaterialSection() {
   }
 
   // 3. If No Request Found (Show Form)
-if (accessStatus !== 'approved') {
-  return (
-    // Responsive Padding: Mobile pe p-4, Tablet/Laptop pe p-20
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 md:p-20">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        // Responsive Width & Corners: Mobile pe w-full, Laptop pe max-w-md
-        className="max-w-md w-full bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl p-6 md:p-10 border border-slate-100 my-8"
-      >
-        <div className="text-center mb-6 md:mb-8">
-          <div className="inline-flex p-4 bg-blue-50 text-blue-600 rounded-3xl mb-4 border border-blue-100">
-            <Lock size={32} />
-          </div>
-          <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase">Unlock Material</h2>
-          <p className="text-xs md:text-sm text-slate-500 font-bold mt-2">Enter details to request study access</p>
-        </div>
+  if (accessStatus !== 'approved') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 md:p-6 relative overflow-hidden">
+        {/* Decorative Background Elements (Optional for extra modern feel) */}
+        <div className="absolute top-[-10%] left-[-10%] w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-50" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-72 h-72 bg-indigo-100 rounded-full blur-3xl opacity-50" />
 
-        <form onSubmit={handleRequestAccess} className="space-y-4 md:space-y-5">
-          {/* Full Name Field */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Full Name</label>
-            <div className="relative">
-              <User className="absolute left-4 top-3.5 text-slate-400" size={18} />
-              <Input 
-                required 
-                placeholder="Student Name" 
-                className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500" 
-                value={studentForm.name} 
-                onChange={(e) => setStudentForm({...studentForm, name: e.target.value})} 
-              />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="max-w-md w-full bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8 md:p-12 border border-white relative z-10"
+        >
+          {/* Header Section */}
+          <div className="text-center mb-10">
+            <div className="inline-flex p-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl mb-6 shadow-lg shadow-blue-200">
+              <Lock size={28} strokeWidth={2.5} />
             </div>
+            <h2 className="text-2xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">
+              LOGIN TO ACCESS NOTES          </h2>
+            <p className="text-sm text-slate-600 font-medium mt-2">
+              "Please log in with your details to access study notes"
+            </p>
           </div>
 
-          {/* Mobile Number Field */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Mobile Number</label>
-            <div className="relative">
-              <Phone className="absolute left-4 top-3.5 text-slate-400" size={18} />
-              <Input 
-                required 
-                type="tel" 
-                placeholder="Mobile Number" 
-                className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500" 
-                value={studentForm.mobile} 
-                onChange={(e) => setStudentForm({...studentForm, mobile: e.target.value})} 
-              />
+          <form onSubmit={handleRequestAccess} className="space-y-5">
+            {/* Full Name Field */}
+            <div className="group space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Input
+                  required
+                  placeholder="Student Name"
+                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
+                  value={studentForm.name}
+                  onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Class Field */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Class</label>
-            <div className="relative">
-              <GraduationCap className="absolute left-4 top-3.5 text-slate-400" size={18} />
-              <Input 
-                required 
-                placeholder="e.g. 10th Standard" 
-                className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500" 
-                value={studentForm.class} 
-                onChange={(e) => setStudentForm({...studentForm, class: e.target.value})} 
-              />
+            {/* Class Field */}
+            <div className="group space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
+                Class
+              </label>
+              <div className="relative">
+                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Input
+                  required
+                  placeholder="e.g. 10th Standard"
+                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
+                  value={studentForm.class}
+                  onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Submit Button */}
-          <Button 
-            disabled={isSubmitting} 
-            className="w-full h-12 md:h-14 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95 text-base mt-2"
-          >
-            {isSubmitting ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <>
-                <Send size={18} className="mr-2" /> REQUEST ACCESS
-              </>
-            )}
-          </Button>
-        </form>
-      </motion.div>
-    </div>
-  );
-}
+            {/* Mobile Number Field */}
+            <div className="group space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
+                Mobile Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Input
+                  required
+                  type="tel"
+                  placeholder="Mobile Number"
+                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
+                  value={studentForm.mobile}
+                  onChange={(e) => setStudentForm({ ...studentForm, mobile: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Email Address Field */}
+            <div className="group space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
+                Email Address
+              </label>
+              <div className="relative">
+                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Input
+                  required
+                  type="email"
+                  placeholder="Email for Verification"
+                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
+                  value={studentForm.email}
+                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              disabled={isSubmitting}
+              className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-200 transition-all duration-300 active:scale-[0.98] text-base mt-6 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <>
+                  <Send size={18} />
+                  <span>Login</span>
+                </>
+              )}
+            </Button>
+
+            <p className="text-center text-[10px] text-slate-400 font-medium uppercase tracking-[0.1em] mt-4">
+              Secure Student Authentication
+            </p>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   // 4. APPROVED (Your Original UI)
   return (
     <div className="bg-[#F8FAFC] min-h-screen">
       {loading && <div className="fixed inset-0 bg-white/80 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={40} /></div>}
-      
+
       {/* --- Section 1: PDF Materials (Your Original Code) --- */}
       <section id="material" className="relative py-8 mt-10 md:py-20 h-auto overflow-y-visible">
         <div className="container mx-auto px-4 pt-20 md:pt-0">
