@@ -23,6 +23,11 @@ export default function StudyMaterialSection() {
 
   // --- Logic 1: Check Access First (Updated for Auth Session) ---
   useEffect(() => {
+
+  const timeout = setTimeout(() => {
+    setIsCheckingAccess(false);
+  }, 3000);
+
     const getInitialSession = async () => {
       // 1. Check if user is already logged in via Supabase Auth
       const { data: { session } } = await supabase.auth.getSession();
@@ -86,13 +91,17 @@ export default function StudyMaterialSection() {
   try {
     setIsCheckingAccess(true);
 
+    if (!email) {
+      setAccessStatus(null);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('student_approvals')
       .select('status')
       .eq('email', email)
       .maybeSingle();
 
-    // 🔥 IMPORTANT FIX
     if (error) {
       console.error("Supabase Error:", error);
       setAccessStatus(null);
@@ -112,8 +121,9 @@ export default function StudyMaterialSection() {
 
   } catch (err) {
     console.error("Access Check Error:", err);
+    setAccessStatus(null);
   } finally {
-    setIsCheckingAccess(false);
+    setIsCheckingAccess(false); // 🔥 ALWAYS RUN
   }
 };
 
