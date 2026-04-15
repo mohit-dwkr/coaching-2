@@ -37,36 +37,39 @@ const StudentManager = () => {
   useEffect(() => { fetchRequests(); }, []);
 
   // 1. Approve Function
-  const approveStudent = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('student_approvals')
-        .update({ status: 'approved' })
-        .eq('id', id);
-      if (error) throw error;
-      setStudents(students.map(s => s.id === id ? { ...s, status: 'approved' } : s));
-    } catch (err: any) {
-      alert("Approval failed: " + err.message);
-    }
-  };
+ const approveStudent = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('student_approvals')
+      .update({ status: 'approved' })
+      .eq('id', id);
 
+    if (error) throw error;
+
+    await fetchRequests(); // 🔥 IMPORTANT
+
+  } catch (err: any) {
+    alert("Approval failed: " + err.message);
+  }
+};
   // 2. Delete Function (Pending ya Approved dono ke liye)
-  const deleteRequest = async (id: string) => {
-    if (!window.confirm("Are You Sure Want to Cancel Student Access ?")) return;
+ const deleteRequest = async (id: string) => {
+  if (!window.confirm("Are You Sure Want to Cancel Student Access ?")) return;
 
-    try {
-      const { error } = await supabase
-        .from('student_approvals')
-        .delete()
-        .eq('id', id);
+  try {
+    const { error } = await supabase
+      .from('student_approvals')
+      .delete()
+      .eq('id', id);
 
-      if (error) throw error;
-      // List se turant hatane ke liye state update
-      setStudents(students.filter(s => s.id !== id));
-    } catch (err: any) {
-      alert("Delete failed: " + err.message);
-    }
-  };
+    if (error) throw error;
+
+    await fetchRequests(); // 🔥 IMPORTANT
+
+  } catch (err: any) {
+    alert("Delete failed: " + err.message);
+  }
+};
 
   const filtered = students.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

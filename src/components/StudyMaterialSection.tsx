@@ -22,9 +22,9 @@ export default function StudyMaterialSection() {
   const [showAllVideos, setShowAllVideos] = useState(false);
 
   // --- Logic 1: Check Access First (Updated for Auth Session) ---
-  useEffect(() => {
+ useEffect(() => {
 
-  // ✅ SAFE LOADER FALLBACK (fix)
+  // ✅ SAFE LOADER FALLBACK
   const timeout = setTimeout(() => {
     setIsCheckingAccess((prev) => prev ? false : prev);
   }, 3000);
@@ -43,23 +43,23 @@ export default function StudyMaterialSection() {
         .eq('email', email)
         .maybeSingle();
 
-      // 🔥 INSERT ONLY AFTER VERIFY (IMPORTANT FIX)
+      // 🔥 FIXED CONDITION (NO email_verified dependency)
       const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
+
       if (!existing && savedForm?.email === email) {
 
-        if (savedForm?.email) {
-          await supabase.from('student_approvals').insert([{
-            email,
-            name: savedForm.name,
-            mobile: savedForm.mobile,
-            class: savedForm.class,
-            status: 'pending'
-          }]);
+        await supabase.from('student_approvals').insert([{
+          email,
+          name: savedForm.name,
+          mobile: savedForm.mobile,
+          class: savedForm.class,
+          status: 'pending'
+        }]);
 
-          if (!localStorage.getItem("email_verified")) {
-            alert("✅ Email verified successfully!");
-            localStorage.setItem("email_verified", "true");
-          }
+        // ✅ alert only once per session
+        if (!localStorage.getItem("email_verified")) {
+          alert("✅ Email verified successfully!");
+          localStorage.setItem("email_verified", "true");
         }
       }
 
@@ -78,7 +78,7 @@ export default function StudyMaterialSection() {
 
   getInitialSession();
 
-  // ✅ LISTENER ONLY (NO INSERT HERE)
+  // ✅ LISTENER (no insert here)
   const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session?.user?.email) {
       checkAccess(session.user.email);
@@ -99,7 +99,7 @@ export default function StudyMaterialSection() {
 
     if (!email) {
       setAccessStatus(null);
-      setIsCheckingAccess(false); // 🔥 IMPORTANT FIX
+      setIsCheckingAccess(false);
       return;
     }
 
@@ -122,15 +122,21 @@ export default function StudyMaterialSection() {
       if (data.status === 'approved') {
         fetchContent();
       }
+
     } else {
+      // 🔥🔥 MAIN FIX (DENY CASE HANDLE)
       setAccessStatus(null);
+
+      localStorage.removeItem("student_email");
+      localStorage.removeItem("student_form");
+      localStorage.removeItem("email_verified");
     }
 
   } catch (err) {
     console.error("Access Check Error:", err);
     setAccessStatus(null);
   } finally {
-    setIsCheckingAccess(false); // 🔥 ALWAYS RUN
+    setIsCheckingAccess(false);
   }
 };
 
