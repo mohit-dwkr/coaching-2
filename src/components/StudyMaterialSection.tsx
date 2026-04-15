@@ -24,67 +24,73 @@ export default function StudyMaterialSection() {
   // --- Logic 1: Check Access First (Updated for Auth Session) ---
   useEffect(() => {
 
+  // ✅ SAFE LOADER FALLBACK (fix)
   const timeout = setTimeout(() => {
-    setIsCheckingAccess(false);
+    setIsCheckingAccess((prev) => prev ? false : prev);
   }, 3000);
 
-    const getInitialSession = async () => {
-      // 1. Check if user is already logged in via Supabase Auth
-      const { data: { session } } = await supabase.auth.getSession();
+  const getInitialSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
 
-      if (session?.user?.email) {
-        checkAccess(session.user.email);
-      } else {
-        // Agar session nahi hai, toh purana email check karo (pending status ke liye)
-        const savedEmail = localStorage.getItem("student_email");
-        if (savedEmail) {
-          checkAccess(savedEmail);
-        } else {
-          setIsCheckingAccess(false);
+    if (session?.user?.email) {
+
+      const email = session.user.email;
+
+      // 🔍 check existing user
+      const { data: existing } = await supabase
+        .from('student_approvals')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      // 🔥 INSERT ONLY AFTER VERIFY (IMPORTANT FIX)
+      if (!existing) {
+        const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
+
+        if (savedForm?.email) {
+          await supabase.from('student_approvals').insert([{
+            email,
+            name: savedForm.name,
+            mobile: savedForm.mobile,
+            class: savedForm.class,
+            status: 'pending'
+          }]);
+
+          if (!localStorage.getItem("email_verified")) {
+            alert("✅ Email verified successfully!");
+            localStorage.setItem("email_verified", "true");
+          }
         }
       }
-    };
 
-    getInitialSession();
+      checkAccess(email);
 
-    // 2. Listen for auth changes (jaise hi Magic Link se login ho)
-   const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session?.user?.email) {
+    } else {
+      const savedEmail = localStorage.getItem("student_email");
 
-    const email = session.user.email;
-
-    // 🔍 check existing
-    const { data: existing } = await supabase
-      .from('student_approvals')
-      .select('*')
-      .eq('email', email)
-      .maybeSingle();
-
-    // 🔥 INSERT ONLY AFTER VERIFY
-    if (!existing) {
-      const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
-
-      await supabase.from('student_approvals').insert([{
-        email,
-        name: savedForm.name,
-        mobile: savedForm.mobile,
-        class: savedForm.class,
-        status: 'pending'
-      }]);
-
-      // ✅ ALERT ONLY ONCE
-      if (!localStorage.getItem("email_verified")) {
-        alert("✅ Email verified successfully!");
-        localStorage.setItem("email_verified", "true");
+      if (savedEmail) {
+        checkAccess(savedEmail);
+      } else {
+        setIsCheckingAccess(false);
       }
     }
+  };
 
-    checkAccess(email);
-  }
-});
+  getInitialSession();
 
-    return () => authListener.subscription.unsubscribe();
-  }, []);
+  // ✅ LISTENER ONLY (NO INSERT HERE)
+  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session?.user?.email) {
+      checkAccess(session.user.email);
+    }
+  });
+
+  return () => {
+    clearTimeout(timeout);
+    authListener.subscription.unsubscribe();
+  };
+
+}, []);
 
   // checkAccess function ko 'mobile' ki jagah 'email' se update karein
  const checkAccess = async (email: string) => {
@@ -93,6 +99,7 @@ export default function StudyMaterialSection() {
 
     if (!email) {
       setAccessStatus(null);
+      setIsCheckingAccess(false); // 🔥 IMPORTANT FIX
       return;
     }
 
@@ -128,7 +135,7 @@ export default function StudyMaterialSection() {
 };
 
   // --- Logic 2: Handle Form Submit (Updated for Magic Link) ---
-  const handleRequestAccess = async (e: React.FormEvent) => {
+ const handleRequestAccess = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsSubmitting(true);
 
@@ -142,7 +149,6 @@ export default function StudyMaterialSection() {
 
     if (error) throw error;
 
-    // ✅ SAVE DATA (IMPORTANT)
     localStorage.setItem("student_form", JSON.stringify(studentForm));
     localStorage.setItem("student_email", studentForm.email);
 
