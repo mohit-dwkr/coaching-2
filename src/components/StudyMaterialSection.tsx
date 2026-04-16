@@ -4,6 +4,7 @@ import { Download, FileText, Loader2, ChevronDown, ChevronUp, Lock, Send, User, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Make sure this import exists
 import { supabase } from "@/supabaseClient";
+import { toast } from "sonner";
 
 export default function StudyMaterialSection() {
   // --- New States for Access Control ---
@@ -59,7 +60,10 @@ export default function StudyMaterialSection() {
           if (!insertError) {
             // ✅ FIX 4: DB insert hone KE BAAD URL clear karo
             window.history.replaceState({}, document.title, window.location.pathname);
-            alert("✅ Email verified! Your request is pending admin approval.");
+
+            toast.success("Email verified ✅", {
+              description: "Your request is pending admin approval.",
+            });
           }
         } else {
           // Form data nahi mila — URL tab bhi clear karo
@@ -79,17 +83,17 @@ export default function StudyMaterialSection() {
       // Magic link return ka case SIRF onAuthStateChange handle karega
       // Pehle check karo ki URL mein tokens hain ya nahi
       const hasMagicLinkTokens = window.location.hash.includes("access_token");
-      
-if (hasMagicLinkTokens) {
-  // 🔥 WAIT FOR SESSION THEN PROCESS
-  const { data: { session } } = await supabase.auth.getSession();
 
-  if (session) {
-    await processMagicLink(session);
-  }
+      if (hasMagicLinkTokens) {
+        // 🔥 WAIT FOR SESSION THEN PROCESS
+        const { data: { session } } = await supabase.auth.getSession();
 
-  return;
-}
+        if (session) {
+          await processMagicLink(session);
+        }
+
+        return;
+      }
 
       // Normal page load: localStorage se email check karo
       const savedEmail = localStorage.getItem("student_email");
@@ -179,11 +183,10 @@ if (hasMagicLinkTokens) {
 
       if (error) throw error;
 
-      alert(
-        "📩 Verification email sent!\n\n" +
-        "Please check your inbox and click the link to verify your email. " +
-        "After clicking, you will be redirected back here automatically."
-      );
+      toast.success("Verification email sent 📩", {
+        description: "Check your inbox and click the login link to continue.",
+      });
+
     } catch (err: any) {
       alert("Error: " + err.message);
       // ✅ Error pe localStorage mat rakho agar insert nahi hua
@@ -254,18 +257,18 @@ if (hasMagicLinkTokens) {
         <Button
           variant="outline"
           className="mt-8 border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-8 rounded-full"
-           onClick={async () => {
-          // 🔥 logout user
-          await supabase.auth.signOut();
+          onClick={async () => {
+            // 🔥 logout user
+            await supabase.auth.signOut();
 
-          // 🔥 clear all stored data
-          localStorage.removeItem("student_email");
-          localStorage.removeItem("student_form");
-          localStorage.removeItem("email_verified");
+            // 🔥 clear all stored data
+            localStorage.removeItem("student_email");
+            localStorage.removeItem("student_form");
+            localStorage.removeItem("email_verified");
 
-          // 🔥 reset state
-          setAccessStatus(null);
-          setStudentForm({ name: "", class: "", mobile: "", email: "" });
+            // 🔥 reset state
+            setAccessStatus(null);
+            setStudentForm({ name: "", class: "", mobile: "", email: "" });
           }}
         >
           Try Again
