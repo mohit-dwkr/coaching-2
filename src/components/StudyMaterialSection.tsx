@@ -21,159 +21,178 @@ export default function StudyMaterialSection() {
   const [videos, setVideos] = useState<any[]>([]);
   const [showAllVideos, setShowAllVideos] = useState(false);
 
-  // --- Logic 1: Check Access First (Updated for Auth Session) ---
- useEffect(() => {
 
-  // ✅ SAFE LOADER FALLBACK
-  const timeout = setTimeout(() => {
-    setIsCheckingAccess((prev) => prev ? false : prev);
-  }, 3000);
-
-  const getInitialSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (session?.user?.email) {
-
+  // ✅ FIX 1: initAuth aur listener mein race condition khatam
+  // Sirf onAuthStateChange magic link handle karega
+  // initAuth sirf localStorage email se status check karega
+  useEffect(() => {
+    // ✅ FIX 2: processMagicLink ka sahi order
+    // Pehle DB insert, PHIR URL clear
+    const processMagicLink = async (session: any) => {
+      if (!session?.user?.email) return;
       const email = session.user.email;
 
-      // 🔍 check existing user
+      // Pehle check karo ki row pehle se hai ya nahi
       const { data: existing } = await supabase
-        .from('student_approvals')
-        .select('*')
-        .eq('email', email)
+        .from("student_approvals")
+        .select("*")
+        .eq("email", email)
         .maybeSingle();
 
-      // 🔥 FIXED CONDITION (NO email_verified dependency)
-     const savedFormRaw = localStorage.getItem("student_form");
-const savedForm = savedFormRaw ? JSON.parse(savedFormRaw) : null;
+      if (!existing) {
+        // ✅ FIX 3: localStorage clear mat karo null case mein
+        // Yahan form data zaroor hoga kyunki user ne abhi submit kiya tha
+        const savedFormRaw = localStorage.getItem("student_form");
+        const savedForm = savedFormRaw ? JSON.parse(savedFormRaw) : null;
 
-      // 🔥 NEW FIX (ONLY EMAIL LINK LOGIN)
-      const isFromEmailLink = window.location.hash.includes("access_token");
+        if (savedForm && savedForm.email === email) {
+          const { error: insertError } = await supabase
+            .from("student_approvals")
+            .insert([{
+              email: email,
+              name: savedForm.name,
+              mobile: savedForm.mobile,
+              class: savedForm.class,
+              status: "pending",
+            }]);
 
-     if (!existing && isFromEmailLink && savedForm?.email === email) {
-
-        await supabase.from('student_approvals').insert([{
-          email,
-          name: savedForm.name,
-          mobile: savedForm.mobile,
-          class: savedForm.class,
-          status: 'pending'
-        }]);
-
-        // ✅ alert only once
-        if (!localStorage.getItem("email_verified")) {
-          alert("✅ Email verified successfully!");
-          localStorage.setItem("email_verified", "true");
+          if (!insertError) {
+            // ✅ FIX 4: DB insert hone KE BAAD URL clear karo
+            window.history.replaceState({}, document.title, window.location.pathname);
+            alert("✅ Email verified! Your request is pending admin approval.");
+          }
+        } else {
+          // Form data nahi mila — URL tab bhi clear karo
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
-
-        // 🔥 clean URL (important)
+      } else {
+        // Row already hai, sirf URL clean karo
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
+      // Ab status check karo
+      await checkAccess(email);
+    };
 
-      checkAccess(email);
+    const initAuth = async () => {
+      // ✅ FIX 5: initAuth sirf localStorage wale case handle karega
+      // Magic link return ka case SIRF onAuthStateChange handle karega
+      // Pehle check karo ki URL mein tokens hain ya nahi
+      const hasMagicLinkTokens = window.location.hash.includes("access_token");
+      
+if (hasMagicLinkTokens) {
+  // 🔥 WAIT FOR SESSION THEN PROCESS
+  const { data: { session } } = await supabase.auth.getSession();
 
-    } else {
+  if (session) {
+    await processMagicLink(session);
+  }
+
+  return;
+}
+
+      // Normal page load: localStorage se email check karo
       const savedEmail = localStorage.getItem("student_email");
-
       if (savedEmail) {
-        checkAccess(savedEmail);
+        await checkAccess(savedEmail);
       } else {
         setIsCheckingAccess(false);
       }
-    }
-  };
+    };
 
-  getInitialSession();
+    initAuth();
 
-  // ✅ LISTENER (no insert here)
-  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session?.user?.email) {
-      checkAccess(session.user.email);
-    }
-  });
+    // ✅ FIX 6: Listener sirf SIGNED_IN handle kare
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          await processMagicLink(session);
+        }
+      }
+    );
 
-  return () => {
-    clearTimeout(timeout);
-    authListener.subscription.unsubscribe();
-  };
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
-}, []);
+  // ✅ FIX 7: checkAccess mein null case mein sirf form dikhao
+  // localStorage clear MAT karo (form data wahan se aata hai)
+  const checkAccess = async (email: string) => {
+    try {
+      setIsCheckingAccess(true);
 
-  // checkAccess function ko 'mobile' ki jagah 'email' se update karein
- const checkAccess = async (email: string) => {
-  try {
-    setIsCheckingAccess(true);
-
-    if (!email) {
-      setAccessStatus(null);
-      setIsCheckingAccess(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('student_approvals')
-      .select('status')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Supabase Error:", error);
-      setAccessStatus(null);
-      return;
-    }
-
-    if (data) {
-      setAccessStatus(data.status);
-      localStorage.setItem("student_email", email);
-
-      if (data.status === 'approved') {
-        fetchContent();
+      if (!email) {
+        setAccessStatus(null);
+        setIsCheckingAccess(false);
+        return;
       }
 
-    } else {
-      // 🔥🔥 MAIN FIX (DENY CASE HANDLE)
+      const { data, error } = await supabase
+        .from("student_approvals")
+        .select("status")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Supabase Error:", error);
+        setAccessStatus(null);
+        return;
+      }
+
+      if (data) {
+        setAccessStatus(data.status);
+        localStorage.setItem("student_email", email);
+        if (data.status === "approved") {
+          fetchContent();
+        }
+      } else {
+        // ✅ Row nahi mila — form dikhao
+        // student_form mat hatao! (magic link se wapas aane pe zarurat padegi)
+        setAccessStatus(null);
+        localStorage.removeItem("student_email");
+      }
+    } catch (err) {
+      console.error("Access Check Error:", err);
       setAccessStatus(null);
-
-      localStorage.removeItem("student_email");
-      localStorage.removeItem("student_form");
-      localStorage.removeItem("email_verified");
+    } finally {
+      setIsCheckingAccess(false);
     }
+  };
 
-  } catch (err) {
-    console.error("Access Check Error:", err);
-    setAccessStatus(null);
-  } finally {
-    setIsCheckingAccess(false);
-  }
-};
+  // ✅ FIX 8: Form submit ke baad clearly batao ki email check karo
+  const handleRequestAccess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      // student_form PEHLE save karo, phir OTP bhejo
+      // Agar OTP send fail ho jaaye toh bhi data safe rahe
+      localStorage.setItem("student_form", JSON.stringify(studentForm));
+      localStorage.setItem("student_email", studentForm.email);
 
-  // --- Logic 2: Handle Form Submit (Updated for Magic Link) ---
- const handleRequestAccess = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+      const { error } = await supabase.auth.signInWithOtp({
+        email: studentForm.email,
+        options: {
+          emailRedirectTo: window.location.origin + "/study-material",
+        },
+      });
 
-  try {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: studentForm.email,
-      options: {
-        emailRedirectTo: window.location.origin + "/study-material",
-      },
-    });
+      if (error) throw error;
 
-    if (error) throw error;
-
-    localStorage.setItem("student_form", JSON.stringify(studentForm));
-    localStorage.setItem("student_email", studentForm.email);
-
-    alert("📩 Check your email for login link!");
-
-  } catch (err: any) {
-    alert("Error: " + err.message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      alert(
+        "📩 Verification email sent!\n\n" +
+        "Please check your inbox and click the link to verify your email. " +
+        "After clicking, you will be redirected back here automatically."
+      );
+    } catch (err: any) {
+      alert("Error: " + err.message);
+      // ✅ Error pe localStorage mat rakho agar insert nahi hua
+      localStorage.removeItem("student_form");
+      localStorage.removeItem("student_email");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // --- Logic 3: Your Existing Fetch Function ---
   async function fetchContent() {
