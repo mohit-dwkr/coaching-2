@@ -44,9 +44,13 @@ export default function StudyMaterialSection() {
         .maybeSingle();
 
       // 🔥 FIXED CONDITION (NO email_verified dependency)
-      const savedForm = JSON.parse(localStorage.getItem("student_form") || "{}");
+     const savedFormRaw = localStorage.getItem("student_form");
+const savedForm = savedFormRaw ? JSON.parse(savedFormRaw) : null;
 
-      if (!existing && savedForm?.email === email) {
+      // 🔥 NEW FIX (ONLY EMAIL LINK LOGIN)
+      const isFromEmailLink = window.location.hash.includes("access_token");
+
+     if (!existing && isFromEmailLink && savedForm?.email === email) {
 
         await supabase.from('student_approvals').insert([{
           email,
@@ -56,12 +60,16 @@ export default function StudyMaterialSection() {
           status: 'pending'
         }]);
 
-        // ✅ alert only once per session
+        // ✅ alert only once
         if (!localStorage.getItem("email_verified")) {
           alert("✅ Email verified successfully!");
           localStorage.setItem("email_verified", "true");
         }
+
+        // 🔥 clean URL (important)
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
+
 
       checkAccess(email);
 
