@@ -4,194 +4,72 @@ import { Download, FileText, Loader2, ChevronDown, ChevronUp, Lock, Send, User, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Make sure this import exists
 import { supabase } from "@/supabaseClient";
-import { toast } from "sonner";
 
 export default function StudyMaterialSection() {
   // --- New States for Access Control ---
   const [accessStatus, setAccessStatus] = useState<string | null>(null); // 'pending', 'approved', 'denied', or null
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [studentForm, setStudentForm] = useState({ name: "", class: "", mobile: "", email: "" });
+  const [studentForm, setStudentForm] = useState({ name: "", mobile: "", class: "" });
 
   // --- Your Existing States ---
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [showMorePdfs, setShowMorePdfs] = useState(false);
+  const [showMorePdfs, setShowMorePdfs] = useState(false); 
   const [videos, setVideos] = useState<any[]>([]);
   const [showAllVideos, setShowAllVideos] = useState(false);
 
-
-  // ✅ FIX 1: initAuth aur listener mein race condition khatam
-  // Sirf onAuthStateChange magic link handle karega
-  // initAuth sirf localStorage email se status check karega
+  // --- Logic 1: Check Access First ---
   useEffect(() => {
-    // ✅ FIX 2: processMagicLink ka sahi order
-    // Pehle DB insert, PHIR URL clear
-    const processMagicLink = async (session: any) => {
-      if (!session?.user?.email) return;
-      const email = session.user.email;
-
-      // Pehle check karo ki row pehle se hai ya nahi
-      const { data: existing } = await supabase
-        .from("student_approvals")
-        .select("*")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (!existing) {
-        // ✅ FIX 3: localStorage clear mat karo null case mein
-        // Yahan form data zaroor hoga kyunki user ne abhi submit kiya tha
-        const savedFormRaw = localStorage.getItem("student_form");
-        const savedForm = savedFormRaw ? JSON.parse(savedFormRaw) : null;
-
-        if (savedForm && savedForm.email === email) {
-          const { error: insertError } = await supabase
-            .from("student_approvals")
-            .insert([{
-              email: email,
-              name: savedForm.name,
-              mobile: savedForm.mobile,
-              class: savedForm.class,
-              status: "pending",
-            }]);
-
-          if (!insertError) {
-            // ✅ FIX 4: DB insert hone KE BAAD URL clear karo
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            toast.success("Email verified ✅", {
-              description: "Your request is pending admin approval.",
-            });
-          }
-        } else {
-          // Form data nahi mila — URL tab bhi clear karo
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } else {
-        // Row already hai, sirf URL clean karo
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      // Ab status check karo
-      await checkAccess(email);
-    };
-
-    const initAuth = async () => {
-      // ✅ FIX 5: initAuth sirf localStorage wale case handle karega
-      // Magic link return ka case SIRF onAuthStateChange handle karega
-      // Pehle check karo ki URL mein tokens hain ya nahi
-      const hasMagicLinkTokens = window.location.hash.includes("access_token");
-
-      if (hasMagicLinkTokens) {
-        // 🔥 WAIT FOR SESSION THEN PROCESS
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-          await processMagicLink(session);
-        }
-
-        return;
-      }
-
-      // Normal page load: localStorage se email check karo
-      const savedEmail = localStorage.getItem("student_email");
-      if (savedEmail) {
-        await checkAccess(savedEmail);
-      } else {
-        setIsCheckingAccess(false);
-      }
-    };
-
-    initAuth();
-
-    // ✅ FIX 6: Listener sirf SIGNED_IN handle kare
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          await processMagicLink(session);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    const savedMobile = localStorage.getItem("student_mobile");
+    if (savedMobile) {
+      checkAccess(savedMobile);
+    } else {
+      setIsCheckingAccess(false);
+    }
   }, []);
 
-  // ✅ FIX 7: checkAccess mein null case mein sirf form dikhao
-  // localStorage clear MAT karo (form data wahan se aata hai)
-  const checkAccess = async (email: string) => {
+  const checkAccess = async (mobile: string) => {
     try {
       setIsCheckingAccess(true);
-
-      if (!email) {
-        setAccessStatus(null);
-        setIsCheckingAccess(false);
-        return;
-      }
-
       const { data, error } = await supabase
-        .from("student_approvals")
-        .select("status")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Supabase Error:", error);
-        setAccessStatus(null);
-        return;
-      }
+        .from('student_approvals')
+        .select('status')
+        .eq('mobile', mobile)
+        .single();
 
       if (data) {
         setAccessStatus(data.status);
-        localStorage.setItem("student_email", email);
-        if (data.status === "approved") {
-          fetchContent();
+        localStorage.setItem("student_mobile", mobile);
+        if (data.status === 'approved') {
+          fetchContent(); // Sirf approved hone par data fetch karega
         }
-      } else {
-        // ✅ Row nahi mila — form dikhao
-        // student_form mat hatao! (magic link se wapas aane pe zarurat padegi)
-        setAccessStatus(null);
-        localStorage.removeItem("student_email");
       }
     } catch (err) {
       console.error("Access Check Error:", err);
-      setAccessStatus(null);
     } finally {
       setIsCheckingAccess(false);
     }
   };
 
-  // ✅ FIX 8: Form submit ke baad clearly batao ki email check karo
+  // --- Logic 2: Handle Form Submit ---
   const handleRequestAccess = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // student_form PEHLE save karo, phir OTP bhejo
-      // Agar OTP send fail ho jaaye toh bhi data safe rahe
-      localStorage.setItem("student_form", JSON.stringify(studentForm));
-      localStorage.setItem("student_email", studentForm.email);
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email: studentForm.email,
-        options: {
-          emailRedirectTo: window.location.origin + "/study-material",
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success("Verification email sent 📩", {
-        description: "Check your inbox and click the login link to continue.",
-      });
-
+      const { error } = await supabase.from('student_approvals').insert([studentForm]);
+      if (error) {
+        if (error.code === '23505') {
+          checkAccess(studentForm.mobile);
+        } else throw error;
+      } else {
+        localStorage.setItem("student_mobile", studentForm.mobile);
+        setAccessStatus('pending');
+      }
     } catch (err: any) {
       alert("Error: " + err.message);
-      // ✅ Error pe localStorage mat rakho agar insert nahi hua
-      localStorage.removeItem("student_form");
-      localStorage.removeItem("student_email");
     } finally {
       setIsSubmitting(false);
     }
@@ -236,7 +114,7 @@ export default function StudyMaterialSection() {
     setSelectedClass(c);
     const firstSubject = materials.find(m => m.student_class === c)?.subject;
     setSelectedSubject(firstSubject ?? "");
-    setShowMorePdfs(false);
+    setShowMorePdfs(false); 
   };
   const filtered = materials.filter(m => m.student_class === selectedClass && m.subject === selectedSubject);
   const visiblePdfs = showMorePdfs ? filtered : filtered.slice(0, 6);
@@ -254,21 +132,13 @@ export default function StudyMaterialSection() {
         <h2 className="text-3xl font-black text-slate-800 uppercase">Access Revoked</h2>
         <p className="text-slate-500 max-w-md mt-2 font-medium">"Your access has been revoked. Please contact the academy for further information.</p>
 
-        <Button
+<Button 
           variant="outline"
           className="mt-8 border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-8 rounded-full"
-          onClick={async () => {
-            // 🔥 logout user
-            await supabase.auth.signOut();
-
-            // 🔥 clear all stored data
-            localStorage.removeItem("student_email");
-            localStorage.removeItem("student_form");
-            localStorage.removeItem("email_verified");
-
-            // 🔥 reset state
-            setAccessStatus(null);
-            setStudentForm({ name: "", class: "", mobile: "", email: "" });
+          onClick={() => {
+            localStorage.removeItem("student_mobile"); // Browser se data delete
+            setAccessStatus(null); // State reset taaki form dikhe
+            setStudentForm({ name: "", mobile: "", class: "" }); // Form fields khali
           }}
         >
           Try Again
@@ -287,7 +157,7 @@ export default function StudyMaterialSection() {
         </div>
         <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Approval Pending</h2>
         <p className="text-slate-500 max-w-sm mt-3 font-medium">"Your request has been submitted. Once approved by the admin, all materials will be visible here."</p>
-        <Button onClick={() => checkAccess(localStorage.getItem("student_email") || "")} className="mt-8 bg-yellow-500 hover:bg-yellow-600 px-10 rounded-full font-bold h-12">
+        <Button onClick={() => checkAccess(localStorage.getItem("student_mobile") || "")} className="mt-8 bg-yellow-500 hover:bg-yellow-600 px-10 rounded-full font-bold h-12">
           Check Status Again
         </Button>
       </div>
@@ -295,131 +165,95 @@ export default function StudyMaterialSection() {
   }
 
   // 3. If No Request Found (Show Form)
-  if (accessStatus !== 'approved') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 md:p-6 relative overflow-hidden">
-        {/* Decorative Background Elements (Optional for extra modern feel) */}
-        <div className="absolute top-[-10%] left-[-10%] w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-72 h-72 bg-indigo-100 rounded-full blur-3xl opacity-50" />
+if (accessStatus !== 'approved') {
+  return (
+    // Responsive Padding: Mobile pe p-4, Tablet/Laptop pe p-20
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 md:p-20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        // Responsive Width & Corners: Mobile pe w-full, Laptop pe max-w-md
+        className="max-w-md w-full bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl p-6 md:p-10 border border-slate-100 my-8"
+      >
+        <div className="text-center mb-6 md:mb-8">
+          <div className="inline-flex p-4 bg-green-50 text-blue-600 rounded-3xl mb-4 border border-green-100">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase">Unlock Material</h2>
+          <p className="text-xs md:text-sm text-slate-500 font-bold mt-2">Enter details to request for study material</p>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="max-w-md w-full bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8 md:p-12 border border-white relative z-10"
-        >
-          {/* Header Section */}
-          <div className="text-center mb-10">
-            <div className="inline-flex p-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl mb-6 shadow-lg shadow-blue-200">
-              <Lock size={28} strokeWidth={2.5} />
+        <form onSubmit={handleRequestAccess} className="space-y-4 md:space-y-5">
+          {/* Full Name Field */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-4 top-3.5 text-slate-400" size={18} />
+              <Input 
+                required 
+                placeholder="Student Name" 
+                className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500" 
+                value={studentForm.name} 
+                onChange={(e) => setStudentForm({...studentForm, name: e.target.value})} 
+              />
             </div>
-            <h2 className="text-2xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">
-              LOGIN TO ACCESS NOTES          </h2>
-            <p className="text-sm text-slate-600 font-medium mt-2">
-              "Please log in with your details to access study notes"
-            </p>
           </div>
 
-          <form onSubmit={handleRequestAccess} className="space-y-5">
-            {/* Full Name Field */}
-            <div className="group space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                <Input
-                  required
-                  placeholder="Student Name"
-                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
-                  value={studentForm.name}
-                  onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
-                />
-              </div>
+          {/* Mobile Number Field */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Mobile Number</label>
+            <div className="relative">
+              <Phone className="absolute left-4 top-3.5 text-slate-400" size={18} />
+              <Input 
+                required 
+                type="tel" 
+                placeholder="Mobile Number" 
+                className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500" 
+                value={studentForm.mobile} 
+                onChange={(e) => setStudentForm({...studentForm, mobile: e.target.value})} 
+              />
             </div>
+          </div>
 
-            {/* Class Field */}
-            <div className="group space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
-                Class
-              </label>
-              <div className="relative">
-                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                <Input
-                  required
-                  placeholder="e.g. 10th Standard"
-                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
-                  value={studentForm.class}
-                  onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
-                />
-              </div>
+          {/* Class Field */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Class</label>
+            <div className="relative">
+              <GraduationCap className="absolute left-4 top-3.5 text-slate-400" size={18} />
+              <Input 
+                required 
+                placeholder="e.g. 10th Standard" 
+                className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500" 
+                value={studentForm.class} 
+                onChange={(e) => setStudentForm({...studentForm, class: e.target.value})} 
+              />
             </div>
+          </div>
 
-            {/* Mobile Number Field */}
-            <div className="group space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
-                Mobile Number
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                <Input
-                  required
-                  type="tel"
-                  placeholder="Mobile Number"
-                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
-                  value={studentForm.mobile}
-                  onChange={(e) => setStudentForm({ ...studentForm, mobile: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Email Address Field */}
-            <div className="group space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase ml-2 tracking-wider transition-colors group-focus-within:text-blue-500">
-                Email Address
-              </label>
-              <div className="relative">
-                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                <Input
-                  required
-                  type="email"
-                  placeholder="Email for Verification"
-                  className="pl-12 h-14 bg-slate-50/50 border-2 border-slate-50 rounded-2xl focus-visible:ring-0 focus-visible:border-blue-500/50 focus-visible:bg-white transition-all duration-300"
-                  value={studentForm.email}
-                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              disabled={isSubmitting}
-              className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-200 transition-all duration-300 active:scale-[0.98] text-base mt-6 flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <>
-                  <Send size={18} />
-                  <span>Login</span>
-                </>
-              )}
-            </Button>
-
-            <p className="text-center text-[10px] text-slate-400 font-medium uppercase tracking-[0.1em] mt-4">
-              Secure Student Authentication
-            </p>
-          </form>
-        </motion.div>
-      </div>
-    );
-  }
+          {/* Submit Button */}
+          <Button 
+            disabled={isSubmitting} 
+            className="w-full h-12 md:h-14 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-green-100 transition-all active:scale-95 text-base mt-2"
+          >
+            {isSubmitting ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <>
+                <Send size={18} className="mr-2" /> SEND ACCESS REQUEST
+              </>
+            )}
+          </Button>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
 
   // 4. APPROVED (Your Original UI)
   return (
     <div className="bg-[#F8FAFC] min-h-screen">
       {loading && <div className="fixed inset-0 bg-white/80 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={40} /></div>}
-
+      
       {/* --- Section 1: PDF Materials (Your Original Code) --- */}
       <section id="material" className="relative py-8 mt-10 md:py-20 h-auto overflow-y-visible">
         <div className="container mx-auto px-4 pt-20 md:pt-0">
@@ -490,7 +324,7 @@ export default function StudyMaterialSection() {
 
             {filtered.length > 6 && (
               <div className="mt-8 text-center">
-                <Button onClick={() => setShowMorePdfs(!showMorePdfs)} variant="outline" className="rounded-full px-8 font-bold border-2 border-blue-300 hover:border-blue-500 hover:text-blue-600 transition-all flex items-center mx-auto gap-2">
+                <Button onClick={() => setShowMorePdfs(!showMorePdfs)} variant="outline" className="rounded-full px-8 font-bold border-2 border-green-300 hover:border-green-500 hover:text-green-600 transition-all flex items-center mx-auto gap-2">
                   {showMorePdfs ? <><ChevronUp className="h-4 w-4" /> Show Less</> : <><ChevronDown className="h-4 w-4" /> Show More Notes ({filtered.length - 6}+)</>}
                 </Button>
               </div>
@@ -530,7 +364,7 @@ export default function StudyMaterialSection() {
 
           {videos.length > 8 && (
             <div className="mt-16 text-center">
-              <button onClick={() => setShowAllVideos(!showAllVideos)} className="px-10 py-4 bg-blue-600 text-white font-bold text-sm rounded-full hover:bg-blue-800 shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center mx-auto gap-2 mb-16">
+              <button onClick={() => setShowAllVideos(!showAllVideos)} className="px-10 py-4 bg-green-600 text-white font-bold text-sm rounded-full hover:bg-green-800 shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center mx-auto gap-2 mb-16">
                 {showAllVideos ? <><ChevronUp className="h-5 w-5" /> Show Less Lectures</> : <><ChevronDown className="h-5 w-5" /> Show More Lectures ({videos.length - 8}+)</>}
               </button>
             </div>
