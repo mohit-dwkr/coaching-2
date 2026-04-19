@@ -13,7 +13,7 @@ export default function BatchCards() {
     async function fetchBatches() {
       try {
         const { data, error } = await supabase
-          .from("Coaching_Batches")
+          .from("Coaching-2_Batches")
           .select("*")
           .order("created_at", { ascending: false });
 

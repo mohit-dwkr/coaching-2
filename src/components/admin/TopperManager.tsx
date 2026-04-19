@@ -23,7 +23,7 @@ export default function TopperManager() {
   const fetchToppers = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("Coaching_Toppers")
+      .from("Coaching-2_Toppers")
       .select("*")
       .order("created_at", { ascending: false });
     
@@ -46,25 +46,25 @@ export default function TopperManager() {
       setLoading(true);
 
       // 1. AGAR EDIT MODE HAI: Toh nayi upload karne se pehle PURANI delete karo
-      if (isEditing && form.image && form.image.includes('coaching_data/')) {
-        const oldPath = form.image.split('coaching_data/')[1]?.split('?')[0];
+      if (isEditing && form.image && form.image.includes('coaching-2_data/')) {
+        const oldPath = form.image.split('coaching-2_data/')[1]?.split('?')[0];
         if (oldPath) {
-          await supabase.storage.from('coaching_data').remove([oldPath]);
+          await supabase.storage.from('coaching-2_data').remove([oldPath]);
         }
       }
 
       // 2. Nayi file upload karo
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `toppers/${fileName}`;
+      const filePath = `toppers_images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('coaching_data')
+        .from('coaching-2_data')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('coaching_data').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
       
       setForm({ ...form, image: data.publicUrl });
       toast.success("New photo uploaded & old one replaced!");
@@ -97,14 +97,14 @@ export default function TopperManager() {
     try {
       if (isEditing) {
         const { error } = await supabase
-          .from("Coaching_Toppers")
+          .from("Coaching-2_Toppers")
           .update(dbPayload)
           .eq("id", isEditing);
         if (error) throw error;
         toast.success("Topper updated!");
       } else {
         const { error } = await supabase
-          .from("Coaching_Toppers")
+          .from("Coaching-2_Toppers")
           .insert([dbPayload]);
         if (error) throw error;
         toast.success("Topper added successfully!");
@@ -142,19 +142,19 @@ export default function TopperManager() {
     setLoading(true);
     try {
       const { data: topper } = await supabase
-        .from("Coaching_Toppers")
+        .from("Coaching-2_Toppers")
         .select("image_url")
         .eq("id", id)
         .single();
 
-      if (topper?.image_url && topper.image_url.includes('coaching_data/')) {
-        const filePath = topper.image_url.split('coaching_data/')[1]?.split('?')[0]; 
+      if (topper?.image_url && topper.image_url.includes('coaching-2_data/')) {
+        const filePath = topper.image_url.split('coaching-2_data/')[1]?.split('?')[0]; 
         if (filePath) {
-          await supabase.storage.from('coaching_data').remove([filePath]);
+          await supabase.storage.from('coaching-2_data').remove([filePath]);
         }
       }
 
-      await supabase.from("Coaching_Toppers").delete().eq("id", id);
+      await supabase.from("Coaching-2_Toppers").delete().eq("id", id);
       toast.success("Removed successfully");
       fetchToppers();
     } catch (error: any) {

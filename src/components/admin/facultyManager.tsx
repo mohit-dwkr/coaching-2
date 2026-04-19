@@ -21,7 +21,7 @@ export default function FacultyManager() {
 
   // 1. Database se data load karna
   const fetchFaculty = async () => {
-    const { data } = await supabase.from("Coaching_Faculty").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("Coaching-2_Faculty").select("*").order("created_at", { ascending: false });
     if (data) setFacultyList(data);
   };
 
@@ -29,7 +29,7 @@ export default function FacultyManager() {
     fetchFaculty();
   }, []);
 
-  // 2. Image Bucket Upload Logic (coaching_data/faculty)
+  // 2. Image Bucket Upload Logic (coaching-2_data/faculty)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -38,15 +38,15 @@ export default function FacultyManager() {
       setLoading(true);
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `faculty/${fileName}`;
+      const filePath = `faculty_images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('coaching_data')
+        .from('coaching-2_data')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('coaching_data').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
       setFormData({ ...formData, image: data.publicUrl });
       toast.success("Image uploaded to cloud!");
     } catch (error: any) {
@@ -73,10 +73,10 @@ export default function FacultyManager() {
 
     try {
       if (isEditing) {
-        await supabase.from("Coaching_Faculty").update(dbPayload).eq("id", isEditing);
+        await supabase.from("Coaching-2_Faculty").update(dbPayload).eq("id", isEditing);
         toast.success("Profile updated!");
       } else {
-        await supabase.from("Coaching_Faculty").insert([dbPayload]);
+        await supabase.from("Coaching-2_Faculty").insert([dbPayload]);
         toast.success("New faculty added!");
       }
       resetForm();
@@ -107,7 +107,7 @@ export default function FacultyManager() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Remove this faculty?")) return;
-    const { error } = await supabase.from("Coaching_Faculty").delete().eq("id", id);
+    const { error } = await supabase.from("Coaching-2_Faculty").delete().eq("id", id);
     if (!error) {
       fetchFaculty();
       toast.error("Faculty removed");

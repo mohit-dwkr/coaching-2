@@ -2,26 +2,39 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, FileText, Upload, Edit2, X, Save, FileUp, Loader2 } from "lucide-react";
-import { supabase } from "@/supabaseClient"; 
+import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
 
 export default function StudyMaterialManager() {
-  const [materials, setMaterials] = useState<any[]>([]); 
+  const [materials, setMaterials] = useState<any[]>([]);
   const [form, setForm] = useState({ title: "", student_class: "", subject: "", file_url: "" });
-  
+
   const [isManualClass, setIsManualClass] = useState(false);
   const [isManualSubject, setIsManualSubject] = useState(false);
-  
+
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false); 
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMaterials = async () => {
     const { data } = await supabase
-      .from("Coaching_StudyMaterial")
+      .from("Coaching-2_StudyMaterial")
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setMaterials(data);
+  };
+
+  const handleView = async (filePath) => {
+    const { data } = await supabase
+      .storage
+      .from("coaching-2_private")
+      .createSignedUrl(filePath, 60);
+
+    if (data?.signedUrl) {
+      window.open(data.signedUrl);
+    } else {
+      toast.error("File open failed");
+    }
   };
 
   useEffect(() => {
@@ -40,23 +53,21 @@ export default function StudyMaterialManager() {
       setIsUploading(true);
 
       // Agar Edit kar rahe hain aur nayi file select ki, toh purani delete karo
-      if (editingId && form.file_url && form.file_url.includes('coaching_data/')) {
-        const oldPath = form.file_url.split('coaching_data/')[1]?.split('?')[0];
-        if (oldPath) {
-          await supabase.storage.from('coaching_data').remove([oldPath]);
-        }
+      if (editingId && form.file_url) {
+        const oldPath = form.file_url;
+        await supabase.storage.from('coaching-2_private').remove([oldPath]);
       }
 
-      const filePath = `study/${Date.now()}_${file.name}`;
-      
+      const filePath = `notes/${Date.now()}_${file.name}`;
+
       const { error: uploadError } = await supabase.storage
-        .from('coaching_data')
+        .from('coaching-2_private')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('coaching_data').getPublicUrl(filePath);
-      setForm({ ...form, file_url: data.publicUrl });
+      // const { data } = supabase.storage.from('coaching-2_private').getPublicUrl(filePath);
+      setForm({ ...form, file_url: filePath });
       toast.success("New file uploaded!");
     } catch (error: any) {
       toast.error("Upload failed: " + error.message);
@@ -67,55 +78,55 @@ export default function StudyMaterialManager() {
 
   const addOrUpdate = async () => {
     if (!form.title || !form.student_class || !form.subject || !form.file_url) {
-        toast.error("Please fill all fields and upload a file");
-        return;
+      toast.error("Please fill all fields and upload a file");
+      return;
     }
 
     setIsUploading(true);
     try {
-        const payload = {
-            title: form.title,
-            student_class: form.student_class,
-            subject: form.subject,
-            file_url: form.file_url
-        };
+      const payload = {
+        title: form.title,
+        student_class: form.student_class,
+        subject: form.subject,
+        file_url: form.file_url
+      };
 
-        if (editingId) {
-          const { error } = await supabase
-            .from("Coaching_StudyMaterial")
-            .update(payload)
-            .eq("id", editingId);
-          
-          if (error) throw error;
-          toast.success("Material updated!");
-          setEditingId(null);
-        } else {
-          const { error } = await supabase
-            .from("Coaching_StudyMaterial")
-            .insert([payload]);
-          
-          if (error) throw error;
-          toast.success("Added to Library!");
-        }
+      if (editingId) {
+        const { error } = await supabase
+          .from("Coaching-2_StudyMaterial")
+          .update(payload)
+          .eq("id", editingId);
 
-        setForm({ title: "", student_class: "", subject: "", file_url: "" });
-        setIsManualClass(false);
-        setIsManualSubject(false);
-        fetchMaterials();
+        if (error) throw error;
+        toast.success("Material updated!");
+        setEditingId(null);
+      } else {
+        const { error } = await supabase
+          .from("Coaching-2_StudyMaterial")
+          .insert([payload]);
+
+        if (error) throw error;
+        toast.success("Added to Library!");
+      }
+
+      setForm({ title: "", student_class: "", subject: "", file_url: "" });
+      setIsManualClass(false);
+      setIsManualSubject(false);
+      fetchMaterials();
     } catch (error: any) {
-        toast.error("Error: " + error.message);
+      toast.error("Error: " + error.message);
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   };
 
   const startEdit = (m: any) => {
     setEditingId(m.id);
-    setForm({ 
-        title: m.title, 
-        student_class: m.student_class, 
-        subject: m.subject, 
-        file_url: m.file_url 
+    setForm({
+      title: m.title,
+      student_class: m.student_class,
+      subject: m.subject,
+      file_url: m.file_url
     });
     setIsManualClass(false);
     setIsManualSubject(false);
@@ -131,34 +142,32 @@ export default function StudyMaterialManager() {
 
   // --- UPDATED REMOVE (Deletes from Storage + DB) ---
   const remove = async (id: string) => {
-    if(!confirm("Delete this material permanently?")) return;
-    
+    if (!confirm("Delete this material permanently?")) return;
+
     setIsUploading(true);
     try {
-        // 1. Storage se file delete karne ke liye URL fetch karo
-        const { data: item } = await supabase
-            .from("Coaching_StudyMaterial")
-            .select("file_url")
-            .eq("id", id)
-            .single();
+      // 1. Storage se file delete karne ke liye URL fetch karo
+      const { data: item } = await supabase
+        .from("Coaching-2_StudyMaterial")
+        .select("file_url")
+        .eq("id", id)
+        .single();
 
-        if (item?.file_url && item.file_url.includes('coaching_data/')) {
-            const filePath = item.file_url.split('coaching_data/')[1]?.split('?')[0];
-            if (filePath) {
-                await supabase.storage.from('coaching_data').remove([filePath]);
-            }
-        }
+      if (item?.file_url) {
+        const filePath = item.file_url;
+        await supabase.storage.from('coaching-2_private').remove([filePath]);
+      }
 
-        // 2. DB record delete karo
-        const { error } = await supabase.from("Coaching_StudyMaterial").delete().eq("id", id);
-        if (error) throw error;
+      // 2. DB record delete karo
+      const { error } = await supabase.from("Coaching-2_StudyMaterial").delete().eq("id", id);
+      if (error) throw error;
 
-        toast.error("Material deleted from storage and list");
-        fetchMaterials();
+      toast.error("Material deleted from storage and list");
+      fetchMaterials();
     } catch (error: any) {
-        toast.error("Delete failed: " + error.message);
+      toast.error("Delete failed: " + error.message);
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   };
 
@@ -173,7 +182,7 @@ export default function StudyMaterialManager() {
         <h3 className="text-xs md:text-sm font-bold uppercase tracking-wider text-primary mb-6 flex items-center gap-2">
           <FileUp className="h-4 w-4" /> {editingId ? "Update Document" : "Upload New Document"}
         </h3>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-600 ml-1">Note Title</label>
@@ -183,7 +192,7 @@ export default function StudyMaterialManager() {
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-600 ml-1">Class</label>
             {!isManualClass ? (
-              <select 
+              <select
                 className="w-full h-11 md:h-10 px-3 rounded-xl border border-input bg-background text-sm focus:ring-2 focus:ring-primary outline-none"
                 value={form.student_class}
                 onChange={(e) => {
@@ -202,7 +211,7 @@ export default function StudyMaterialManager() {
             ) : (
               <div className="relative">
                 <Input className="rounded-xl pr-10 h-11 md:h-10 text-sm" placeholder="Type Class" value={form.student_class} onChange={(e) => setForm({ ...form, student_class: e.target.value })} />
-                <button onClick={() => setIsManualClass(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"><X className="h-4 w-4"/></button>
+                <button onClick={() => setIsManualClass(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
               </div>
             )}
           </div>
@@ -210,7 +219,7 @@ export default function StudyMaterialManager() {
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-600 ml-1">Subject</label>
             {!isManualSubject ? (
-              <select 
+              <select
                 className="w-full h-11 md:h-10 px-3 rounded-xl border border-input bg-background text-sm focus:ring-2 focus:ring-primary outline-none"
                 value={form.subject}
                 onChange={(e) => {
@@ -229,7 +238,7 @@ export default function StudyMaterialManager() {
             ) : (
               <div className="relative">
                 <Input className="rounded-xl pr-10 h-11 md:h-10 text-sm" placeholder="Type Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
-                <button onClick={() => setIsManualSubject(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"><X className="h-4 w-4"/></button>
+                <button onClick={() => setIsManualSubject(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
               </div>
             )}
           </div>
@@ -286,8 +295,13 @@ export default function StudyMaterialManager() {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              <Button variant="outline" size="sm" className="rounded-lg text-[11px] font-bold h-9 px-4" asChild>
-                <a href={m.file_url} target="_blank" rel="noreferrer">View File</a>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg text-[11px] font-bold h-9 px-4"
+                onClick={() => handleView(m.file_url)}
+              >
+                View File
               </Button>
             </div>
           </div>

@@ -13,7 +13,7 @@ export default function InquiryInbox() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("Coaching_Contactform")
+        .from("Coaching-2_Contactform")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -33,7 +33,7 @@ export default function InquiryInbox() {
   const handleDelete = async (id: string | number) => {
     try {
       const { error } = await supabase
-        .from("Coaching_Contactform")
+        .from("Coaching-2_Contactform")
         .delete()
         .eq("id", id);
 

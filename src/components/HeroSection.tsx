@@ -21,7 +21,7 @@ export default function HeroSection() {
   async function fetchHero() {
     try {
       const { data, error } = await supabase
-        .from("Coaching_Hero")
+        .from("Coaching-2_Hero")
         .select("*") // Isme 'highlight_word' column bhi fetch hoga
         .limit(1)
         .single();

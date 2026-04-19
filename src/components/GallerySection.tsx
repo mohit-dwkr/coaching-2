@@ -15,7 +15,7 @@ export default function GallerySection() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from("Coaching_Gallery")
+          .from("Coaching-2_Gallery")
           .select("*")
           .order("created_at", { ascending: false });
 

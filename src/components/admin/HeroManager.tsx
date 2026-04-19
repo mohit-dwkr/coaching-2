@@ -30,7 +30,7 @@ export default function HeroManager() {
  const fetchHeroData = async () => {
   setLoading(true);
   const { data, error } = await supabase
-    .from("Coaching_Hero")
+    .from("Coaching-2_Hero")
     .select("*")
     .limit(1)
     .single();
@@ -76,10 +76,10 @@ export default function HeroManager() {
     setUploading(true);
     const fileExt = file.name.split('.').pop();
     const fileName = `hero-${Date.now()}.${fileExt}`;
-    const filePath = `hero/${fileName}`;
+    const filePath = `hero_images/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('coaching_data')
+      .from('coaching-2_data')
       .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
@@ -88,7 +88,7 @@ export default function HeroManager() {
       return;
     }
 
-    const { data: urlData } = supabase.storage.from('coaching_data').getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
     setForm((prev) => ({ ...prev, image_url: urlData.publicUrl }));
     setUploading(false);
     toast.success("Image uploaded!");
@@ -106,9 +106,9 @@ export default function HeroManager() {
 
     let result;
     if (heroId) {
-      result = await supabase.from("Coaching_Hero").update(payload).eq("id", heroId);
+      result = await supabase.from("Coaching-2_Hero").update(payload).eq("id", heroId);
     } else {
-      result = await supabase.from("Coaching_Hero").insert([payload]);
+      result = await supabase.from("Coaching-2_Hero").insert([payload]);
     }
 
     if (!result.error) {
@@ -127,7 +127,7 @@ export default function HeroManager() {
   
   // 1. Database se delete karein
   if (heroId) {
-    const { error } = await supabase.from("Coaching_Hero").delete().eq("id", heroId);
+    const { error } = await supabase.from("Coaching-2_Hero").delete().eq("id", heroId);
     if (error) toast.error("Database reset failed");
   }
   

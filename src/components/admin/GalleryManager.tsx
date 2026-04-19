@@ -14,7 +14,7 @@ export default function GalleryManager() {
 
   const fetchGallery = async () => {
     const { data, error } = await supabase
-      .from("Coaching_Gallery")
+      .from("Coaching-2_Gallery")
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setGalleryState(data);
@@ -32,24 +32,24 @@ export default function GalleryManager() {
       setLoading(true);
 
       // --- CLEANUP OLD IMAGE ON EDIT ---
-      if (editingId && form.url && form.url.includes('coaching_data/')) {
-        const oldPath = form.url.split('coaching_data/')[1]?.split('?')[0];
+      if (editingId && form.url && form.url.includes('coaching-2_data/')) {
+        const oldPath = form.url.split('coaching-2_data/')[1]?.split('?')[0];
         if (oldPath) {
-          await supabase.storage.from('coaching_data').remove([oldPath]);
+          await supabase.storage.from('coaching-2_data').remove([oldPath]);
         }
       }
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `gallery/${fileName}`;
+      const filePath = `gallery_images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('coaching_data')
+        .from('coaching-2_data')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('coaching_data').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
       setForm({ ...form, url: data.publicUrl });
       toast.success("Image uploaded successfully!");
     } catch (error: any) {
@@ -66,14 +66,14 @@ export default function GalleryManager() {
     try {
       if (editingId) {
         const { error } = await supabase
-          .from("Coaching_Gallery")
+          .from("Coaching-2_Gallery")
           .update({ image_url: form.url, caption: form.caption })
           .eq("id", editingId);
         if (error) throw error;
         toast.success("Gallery updated!");
       } else {
         const { error } = await supabase
-          .from("Coaching_Gallery")
+          .from("Coaching-2_Gallery")
           .insert([{ image_url: form.url, caption: form.caption }]);
         if (error) throw error;
         toast.success("Added to Gallery!");
@@ -107,20 +107,20 @@ export default function GalleryManager() {
     try {
       // 1. Image URL fetch karo storage se delete karne ke liye
       const { data: item } = await supabase
-        .from("Coaching_Gallery")
+        .from("Coaching-2_Gallery")
         .select("image_url")
         .eq("id", id)
         .single();
 
-      if (item?.image_url && item.image_url.includes('coaching_data/')) {
-        const filePath = item.image_url.split('coaching_data/')[1]?.split('?')[0];
+      if (item?.image_url && item.image_url.includes('coaching-2_data/')) {
+        const filePath = item.image_url.split('coaching-2_data/')[1]?.split('?')[0];
         if (filePath) {
-          await supabase.storage.from('coaching_data').remove([filePath]);
+          await supabase.storage.from('coaching-2_data').remove([filePath]);
         }
       }
 
       // 2. Database row delete karo
-      const { error } = await supabase.from("Coaching_Gallery").delete().eq("id", id);
+      const { error } = await supabase.from("Coaching-2_Gallery").delete().eq("id", id);
       
       if (error) throw error;
       

@@ -13,7 +13,7 @@ export default function BatchManager() {
   const fetchBatches = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("Coaching_Batches")
+      .from("Coaching-2_Batches")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -37,13 +37,13 @@ export default function BatchManager() {
 
     if (editingId) {
       const { error } = await supabase
-        .from("Coaching_Batches")
+        .from("Coaching-2_Batches")
         .update(batchData)
         .eq("id", editingId);
       
       if (!error) setEditingId(null);
     } else {
-      await supabase.from("Coaching_Batches").insert([batchData]);
+      await supabase.from("Coaching-2_Batches").insert([batchData]);
     }
 
     setForm({ className: "", subjects: "", timing: "", fees: "" });
@@ -66,7 +66,7 @@ export default function BatchManager() {
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("Coaching_Batches").delete().eq("id", id);
+    const { error } = await supabase.from("Coaching-2_Batches").delete().eq("id", id);
     if (!error) fetchBatches();
   };
 

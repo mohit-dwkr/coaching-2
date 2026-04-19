@@ -25,7 +25,7 @@ export default function ContactSection() {
       setIsSubmitting(true);
 
       const { error } = await supabase
-        .from("Coaching_Contactform")
+        .from("Coaching-2_Contactform")
         .insert([
           {
             name: form.name,

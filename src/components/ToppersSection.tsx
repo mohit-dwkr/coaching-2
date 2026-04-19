@@ -14,7 +14,7 @@ export default function ToppersSection() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from("Coaching_Toppers")
+          .from("Coaching-2_Toppers")
           .select("*")
           .order("created_at", { ascending: false });
 

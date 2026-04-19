@@ -13,7 +13,7 @@ export default function FacultySection() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from("Coaching_Faculty")
+          .from("Coaching-2_Faculty")
           .select("*")
           .order("created_at", { ascending: false });
 
