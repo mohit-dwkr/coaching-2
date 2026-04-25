@@ -13,8 +13,6 @@ import Navbar from "./components/Navbar";
 import About from "./pages/About";
 import Payment from "./pages/Payment";
 
-// import LanguagePopup from "./components/LanguagePopup";
-
 const queryClient = new QueryClient();
 
 // 🔥 Scroll Logic: Ye function hash (#) dekh kar sahi jagah scroll karega
@@ -72,11 +70,11 @@ function LayoutContent() {
 
     {!isAdminPage && (
         <>
-          {/* <LanguagePopup /> */}
+          
           <Navbar />
         </>
       )}
-{/* <div className={isAdminPage ? "notranslate" : ""}> */}
+
 <div>
       <Routes>
         <Route path="/" element={<Index />} />
