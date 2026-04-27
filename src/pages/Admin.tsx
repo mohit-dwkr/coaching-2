@@ -63,18 +63,25 @@ export default function Admin() {
   // 🔐 Protect Admin Route
   useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
+   const { data } = await supabase.auth.getUser();
 
-      if (
-        !data.user ||
-        data.user.email !== "diwakarmohit0007@gmail.com"
-      ) {
-        navigate("/admin-login");
-      } else {
-        setLoading(false);
-      }
-    };
+if (!data.user) {
+  navigate("/admin-login");
+  return;
+}
 
+const { data: adminData, error } = await supabase
+  .from("admins")
+  .select("email")
+  .eq("email", data.user.email)
+  .maybeSingle();
+
+if (error || !adminData) {
+  navigate("/admin-login");
+} else {
+  setLoading(false);
+}
+    }
     checkUser();
   }, [navigate]);
 

@@ -151,7 +151,7 @@ export default function Navbar() {
               </div>
             )}
           </div>
-          <Link to="/study-material" className={`px-4 py-2 text-sm font-bold transition-all ${isSolid ? "text-muted-foreground hover:text-blue-700" : "text-white/70 hover:text-white"
+          <Link to="/userlogin" className={`px-4 py-2 text-sm font-bold transition-all ${isSolid ? "text-muted-foreground hover:text-blue-700" : "text-white/70 hover:text-white"
             }`}>
             Study Material
           </Link>

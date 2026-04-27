@@ -59,7 +59,7 @@ const StudentManager = () => {
   try {
     const { error } = await supabase
       .from('student_approvals')
-      .delete()
+     .update({ status: 'denied' })   // 🔥 CHANGE
       .eq('id', id);
 
     if (error) throw error;

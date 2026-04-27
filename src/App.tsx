@@ -12,6 +12,8 @@ import StudyMaterialSection from "./components/StudyMaterialSection";
 import Navbar from "./components/Navbar";
 import About from "./pages/About";
 import Payment from "./pages/Payment";
+import UserLogin from "./pages/UserLogin";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,8 @@ function LayoutContent() {
         <Route path="/" element={<Index />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/userlogin" element={<UserLogin />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/study-material" element={<StudyMaterialSection />} />
         <Route path="/about" element={<About />} />
         <Route path="/payment" element={<Payment />} />

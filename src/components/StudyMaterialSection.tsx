@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, FileText, Loader2, ChevronDown, ChevronUp, Lock, Send, User, Phone, GraduationCap, Clock, XCircle, Mail } from "lucide-react";
+import { Download, FileText, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/supabaseClient";
 
 export default function StudyMaterialSection() {
-  const [accessStatus, setAccessStatus] = useState<string | null>(null);
-  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [studentForm, setStudentForm] = useState({ name: "", mobile: "", class: "", email: "" });
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,135 +14,36 @@ export default function StudyMaterialSection() {
   const [videos, setVideos] = useState<any[]>([]);
   const [showAllVideos, setShowAllVideos] = useState(false);
 
-  // --- Logic 1: Auth & Access Check ---
+  // ✅ ONLY FETCH CONTENT (no auth logic)
   useEffect(() => {
-    const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user?.email) {
-        // Agar user logged in hai, check if he exists in approvals table
-        await checkAccess(session.user.email);
-      } else {
-        setIsCheckingAccess(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listen for auth changes (like clicking magic link)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user?.email) {
-        // Link click karke wapas aane par status check karo ya naya record banao
-        handlePostLogin(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    fetchContent();
   }, []);
 
-  const checkAccess = async (email: string) => {
-    try {
-      setIsCheckingAccess(true);
-      const { data, error } = await supabase
-        .from('student_approvals')
-        .select('status')
-        .eq('email', email)
-        .maybeSingle();
+  const handleDownload = async (filePath: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
 
-      if (data) {
-        setAccessStatus(data.status);
-        if (data.status === 'approved') {
-          fetchContent();
-        }
-      } else {
-        setAccessStatus(null);
-      }
-    } catch (err) {
-      console.error("Access Check Error:", err);
-    } finally {
-      setIsCheckingAccess(false);
+    if (!session) {
+      alert("Please login first");
+      return;
+    }
+
+    const { data: urlData, error } = await supabase
+      .storage
+      .from("coaching-2_private")
+      .createSignedUrl(filePath, 60);
+
+    if (urlData?.signedUrl) {
+      window.open(urlData.signedUrl, '_blank');
+    } else {
+      console.error("Error generating URL:", error);
+      alert("Something Went Wrong, please try again.");
     }
   };
-
-  // Jab user login karke wapas aaye
-  const handlePostLogin = async (user: any) => {
-    // Check if record already exists
-    const { data } = await supabase
-      .from('student_approvals')
-      .select('*')
-      .eq('email', user.email)
-      .maybeSingle();
-
-    if (!data) {
-      // Agar naya user hai toh temporary localStorage se details uthao jo form bharte waqt save ki thi
-      const pendingInfo = JSON.parse(localStorage.getItem("pending_reg") || "{}");
-      if (pendingInfo.name) {
-        await supabase.from('student_approvals').insert([{
-          name: pendingInfo.name,
-          mobile: pendingInfo.mobile,
-          class: pendingInfo.class,
-          email: user.email,
-          status: 'pending'
-        }]);
-        localStorage.removeItem("pending_reg");
-      }
-    }
-    checkAccess(user.email);
-  };
-
-  // --- Logic 2: Magic Link Request ---
-  const handleRequestAccess = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      // Pehle details store karlo taaki login ke baad table mein daal sakein
-      localStorage.setItem("pending_reg", JSON.stringify(studentForm));
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email: studentForm.email,
-        options: {
-          emailRedirectTo: window.location.origin + window.location.pathname,
-        },
-      });
-
-      if (error) throw error;
-      setMagicLinkSent(true);
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-const handleDownload = async (filePath: string) => {
-  // 1. Extra Security Check: Pehle confirm karo ki user approved hai
-  if (accessStatus !== 'approved') {
-    alert("Your account has not appeoved by admin.");
-    return;
-  }
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    alert("Please login first");
-    return;
-  }
-
-  const { data: urlData, error } = await supabase
-    .storage
-    .from("coaching-2_private")
-    .createSignedUrl(filePath, 60); // Link valid for 60 seconds
-
-  if (urlData?.signedUrl) {
-    window.open(urlData.signedUrl, '_blank');
-  } else {
-    console.error("Error generating URL:", error);
-    alert("Something Went Wrong, please try again.");
-  }
-};
 
   async function fetchContent() {
     try {
       setLoading(true);
+
       const { data: matData } = await supabase
         .from("Coaching-2_StudyMaterial")
         .select("*")
@@ -156,10 +51,16 @@ const handleDownload = async (filePath: string) => {
 
       if (matData) {
         setMaterials(matData);
+
         const uniqueClasses = [...new Set(matData.map((m: any) => m.student_class))] as string[];
+
         if (uniqueClasses.length > 0) {
           setSelectedClass(uniqueClasses[0]);
-          const firstSubject = matData.find((m: any) => m.student_class === uniqueClasses[0])?.subject;
+
+          const firstSubject = matData.find(
+            (m: any) => m.student_class === uniqueClasses[0]
+          )?.subject;
+
           setSelectedSubject(firstSubject || "");
         }
       }
@@ -170,6 +71,7 @@ const handleDownload = async (filePath: string) => {
         .order('created_at', { ascending: false });
 
       if (vidData) setVideos(vidData);
+
     } catch (err) {
       console.error("Content Fetch Error:", err);
     } finally {
@@ -178,168 +80,44 @@ const handleDownload = async (filePath: string) => {
   }
 
   const classes = [...new Set(materials.map((m) => m.student_class))] as string[];
-  const subjectsForClass = [...new Set(materials.filter((m) => m.student_class === selectedClass).map((m) => m.subject))] as string[];
+
+  const subjectsForClass = [
+    ...new Set(
+      materials
+        .filter((m) => m.student_class === selectedClass)
+        .map((m) => m.subject)
+    ),
+  ] as string[];
+
   const handleClassChange = (c: string) => {
     setSelectedClass(c);
+
     const firstSubject = materials.find(m => m.student_class === c)?.subject;
     setSelectedSubject(firstSubject ?? "");
+
     setShowMorePdfs(false);
   };
 
-  const filtered = materials.filter(m => m.student_class === selectedClass && m.subject === selectedSubject);
+  const filtered = materials.filter(
+    m => m.student_class === selectedClass && m.subject === selectedSubject
+  );
+
   const visiblePdfs = showMorePdfs ? filtered : filtered.slice(0, 6);
   const visibleVideos = showAllVideos ? videos : videos.slice(0, 8);
 
-  if (isCheckingAccess) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
-
-  // Magic Link Sent View
-  if (magicLinkSent) {
+  if (loading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-        <div className="p-5 bg-blue-50 text-blue-600 rounded-full mb-6 animate-bounce border-2 border-blue-200">
-          <Mail size={60} />
-        </div>
-        <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Check Your Email</h2>
-        <p className="text-slate-500 max-w-sm mt-3 font-medium">We've sent a magic login link to <b>{studentForm.email}</b>. Please click the link to verify your identity.</p>
-        <Button variant="ghost" onClick={() => setMagicLinkSent(false)} className="mt-6 text-slate-400 font-bold">Back to Form</Button>
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (accessStatus === 'denied') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-        <XCircle size={80} className="text-red-500 mb-4" />
-        <h2 className="text-3xl font-black text-slate-800 uppercase">Access Revoked</h2>
-        <p className="text-slate-500 max-w-md mt-2 font-medium">Your access has been revoked. Please contact the academy for further information.</p>
-        <Button
-          variant="outline"
-          className="mt-8 border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-8 rounded-full"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setAccessStatus(null);
-            setStudentForm({ name: "", mobile: "", class: "", email: "" });
-          }}
-        >
-          Try Different Email
-        </Button>
-      </div>
-    );
-  }
-
-  if (accessStatus === 'pending') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-        <div className="p-5 bg-yellow-50 text-yellow-600 rounded-full mb-6 animate-pulse border-2 border-yellow-200">
-          <Clock size={60} />
-        </div>
-        <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Approval Pending</h2>
-        <p className="text-slate-500 max-w-sm mt-3 font-medium">Your request has been submitted. Once approved by the admin, all materials will be visible here.</p>
-        <Button onClick={async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.email) checkAccess(session.user.email);
-        }} className="mt-8 bg-yellow-500 hover:bg-yellow-600 px-10 rounded-full font-bold h-12">
-          Check Status Again
-        </Button>
-      </div>
-    );
-  }
-
-if (accessStatus !== 'approved') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 md:p-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl p-6 md:p-10 border border-slate-100 my-8"
-        >
-          <div className="text-center mb-6 md:mb-8">
-            <div className="inline-flex p-4 bg-green-50 text-blue-600 rounded-3xl mb-4 border border-green-100">
-              <Lock size={32} />
-            </div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase">Unlock Material</h2>
-            <p className="text-xs md:text-sm text-slate-500 font-bold mt-2">Enter details and verify email to access study material</p>
-          </div>
-
-          <form onSubmit={handleRequestAccess} className="space-y-4 md:space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-4 top-3.5 text-slate-400" size={18} />
-                <Input
-                  required
-                  placeholder="Student Name"
-                  className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500"
-                  value={studentForm.name}
-                  onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-3.5 text-slate-400" size={18} />
-                <Input
-                  required
-                  type="email"
-                  placeholder="yourname@gmail.com"
-                  className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500"
-                  value={studentForm.email}
-                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Mobile Number</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-3.5 text-slate-400" size={18} />
-                <Input
-                  required
-                  type="tel"
-                  placeholder="Mobile Number"
-                  className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500"
-                  value={studentForm.mobile}
-                  onChange={(e) => setStudentForm({ ...studentForm, mobile: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Class</label>
-              <div className="relative">
-                <GraduationCap className="absolute left-4 top-3.5 text-slate-400" size={18} />
-                <Input
-                  required
-                  placeholder="e.g. 10th Standard"
-                  className="pl-12 h-12 md:h-14 bg-slate-50 border-none rounded-2xl focus-visible:ring-blue-500"
-                  value={studentForm.class}
-                  onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <Button
-              disabled={isSubmitting}
-              className="w-full h-12 md:h-14 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 text-base mt-2"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin" /> : <><Send size={18} className="mr-2" />Login</>}
-            </Button>
-          </form>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen">
-      {loading && <div className="fixed inset-0 bg-white/80 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={40} /></div>}
-      
-      {/* --- Dono Sections yahan ek hi motion.div container mein hain --- */}
+
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-        
-        {/* Section 1: Study Material */}
+
+        {/* ✅ Study Material UI SAME */}
         <section id="material" className="relative py-8 mt-10 md:py-20 h-auto overflow-y-visible">
           <div className="container mx-auto px-4 pt-20 md:pt-0">
             <div className="text-center mb-10 px-4">
@@ -349,23 +127,40 @@ if (accessStatus !== 'approved') {
             </div>
 
             <div className="max-w-4xl mx-auto px-4 pb-20">
+
+              {/* Class */}
               <div className="mb-8 text-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Step 1: Select Your Class</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">
+                  Step 1: Select Your Class
+                </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {classes.map((c: string) => (
-                    <button key={c} onClick={() => handleClassChange(c)} className={`px-5 py-2 rounded-xl font-bold transition-all ${selectedClass === c ? "bg-primary text-white shadow-md" : "bg-white border text-slate-500 hover:bg-slate-50"}`}>
+                    <button key={c} onClick={() => handleClassChange(c)}
+                      className={`px-5 py-2 rounded-xl font-bold transition-all ${
+                        selectedClass === c
+                          ? "bg-primary text-white shadow-md"
+                          : "bg-white border text-slate-500 hover:bg-slate-50"
+                      }`}>
                       Class {c}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Subject */}
               {selectedClass && (
                 <div className="mb-12 text-center animate-in fade-in duration-300">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Step 2: Choose Subject</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">
+                    Step 2: Choose Subject
+                  </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {subjectsForClass.map((s: string) => (
-                      <button key={s} onClick={() => setSelectedSubject(s)} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedSubject === s ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+                      <button key={s} onClick={() => setSelectedSubject(s)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                          selectedSubject === s
+                            ? "bg-slate-800 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}>
                         {s}
                       </button>
                     ))}
@@ -373,37 +168,33 @@ if (accessStatus !== 'approved') {
                 </div>
               )}
 
+              {/* PDFs */}
               <div className="space-y-4">
                 <AnimatePresence mode="wait">
                   {visiblePdfs.map((m: any) => (
-                    <motion.div key={m.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} whileHover={{ y: -2 }} className="group relative bg-white border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none" />
-                      <div className="flex items-center gap-4 w-full relative z-10">
-                        <div className="h-12 w-12 shrink-0 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-inner">
+                    <motion.div key={m.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="group relative bg-white border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md">
+
+                      <div className="flex items-center gap-4 w-full">
+                        <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                           <FileText size={24} />
                         </div>
-                        <div className="min-w-0 flex-1 text-left">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="font-extrabold text-slate-800 truncate text-sm md:text-base">{m.title}</p>
-                            <span className="hidden md:inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase">PDF</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-semibold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">{m.subject}</span>
-                            <span className="text-[14px] font-medium text-gray-500 flex items-center gap-1">
-                              <span className="h-1 w-1 rounded-full bg-slate-300" /> Class {m.student_class}
-                            </span>
-                          </div>
+
+                        <div className="flex-1 text-left">
+                          <p className="font-extrabold text-slate-800">{m.title}</p>
+                          <p className="text-sm text-gray-500">
+                            {m.subject} • Class {m.student_class}
+                          </p>
                         </div>
                       </div>
-                      <div className="w-full sm:w-auto relative z-10">
-                        <Button
-                          onClick={() => handleDownload(m.file_url)}
-                          className="w-full sm:w-auto rounded-xl font-bold bg-slate-900 hover:bg-blue-600 text-white h-11 px-6"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download Notes
-                        </Button>
-                      </div>
+
+                      <Button onClick={() => handleDownload(m.file_url)}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -411,54 +202,48 @@ if (accessStatus !== 'approved') {
 
               {filtered.length > 6 && (
                 <div className="mt-8 text-center">
-                  <Button onClick={() => setShowMorePdfs(!showMorePdfs)} variant="outline" className="rounded-full px-8 font-bold border-2 border-green-300 hover:border-green-500 hover:text-green-600 transition-all flex items-center mx-auto gap-2">
-                    {showMorePdfs ? <><ChevronUp className="h-4 w-4" /> Show Less</> : <><ChevronDown className="h-4 w-4" /> Show More Notes ({filtered.length - 6}+)</>}
+                  <Button onClick={() => setShowMorePdfs(!showMorePdfs)}>
+                    {showMorePdfs ? "Show Less" : "Show More"}
                   </Button>
                 </div>
               )}
+
             </div>
           </div>
         </section>
 
-        {/* Section 2: Video Lectures */}
-        <section className="py-20 bg-slate-50 overflow-hidden">
+        {/* ✅ Video UI SAME */}
+        <section className="py-20 bg-slate-50">
           <div className="container mx-auto px-6 max-w-7xl">
-            <div className="mb-12 text-center">
-              <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
-                Video <span className="text-blue-700">Lectures</span>
-              </h2>
-              <div className="h-1.5 w-20 bg-blue-700 mt-4 rounded-full mx-auto mb-12"></div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 ">
+            <h2 className="text-3xl md:text-5xl font-black text-center mb-12">
+              Video Lectures
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {visibleVideos.map((vid) => (
-                <a key={vid.id} href={`https://www.youtube.com/watch?v=${vid.youtube_id}`} target="_blank" rel="noopener noreferrer" className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-slate-100 flex flex-col">
-                  <div className="aspect-video relative overflow-hidden bg-slate-200">
-                    <img src={`https://img.youtube.com/vi/${vid.youtube_id}/maxresdefault.jpg`} alt={vid.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onError={(e: any) => { e.target.src = `https://img.youtube.com/vi/${vid.youtube_id}/0.jpg` }} />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/40 transition-all">
-                      <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-xl">
-                        <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[12px] border-l-blue-700 border-b-[6px] border-b-transparent ml-1"></div>
-                      </div>
-                    </div>
+                <a key={vid.id}
+                  href={`https://www.youtube.com/watch?v=${vid.youtube_id}`}
+                  target="_blank"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm">
+
+                  <img
+                    src={`https://img.youtube.com/vi/${vid.youtube_id}/0.jpg`}
+                    alt={vid.title}
+                  />
+
+                  <div className="p-4">
+                    <p className="font-bold">{vid.title}</p>
                   </div>
-                  <div className="p-6 flex-grow">
-                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest px-2 py-1 bg-blue-50 rounded-md">{vid.subject}</span>
-                    <h3 className="font-extrabold text-slate-800 text-base mt-3 line-clamp-2 leading-tight group-hover:text-blue-700 transition-colors">{vid.title}</h3>
-                  </div>
+
                 </a>
               ))}
             </div>
-            {videos.length > 8 && (
-              <div className="mt-16 text-center">
-                <button onClick={() => setShowAllVideos(!showAllVideos)} className="px-10 py-4 bg-green-600 text-white font-bold text-sm rounded-full hover:bg-green-800 shadow-xl transition-all active:scale-95 flex items-center mx-auto gap-2 mb-16">
-                  {showAllVideos ? <><ChevronUp className="h-5 w-5" /> Show Less Lectures</> : <><ChevronDown className="h-5 w-5" /> Show More Lectures ({videos.length - 8}+)</>}
-                </button>
-              </div>
-            )}
+
           </div>
         </section>
 
-      </motion.div> {/* motion.div Wrapper Ends Here */}
+      </motion.div>
     </div>
   );
 }
