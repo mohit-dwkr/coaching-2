@@ -263,7 +263,7 @@ export default function Navbar() {
             )}
           </div>
 
-          <Link to="/study-material" onClick={() => setOpen(false)} className="block py-3 text-base font-semibold border-b border-border/50 text-foreground">
+          <Link to="/dashboard" onClick={() => setOpen(false)} className="block py-3 text-base font-semibold border-b border-border/50 text-foreground">
             Study Material
           </Link>
           <Link to="/about" onClick={() => setOpen(false)} className="block py-3 text-base font-semibold border-b border-border/50 text-foreground">

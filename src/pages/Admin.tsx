@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   AppWindow,
-  LogOut
+  LogOut,
+  Bell
 } from "lucide-react";
 
 import { supabase } from"@/supabaseClient";
@@ -25,6 +26,7 @@ import FacultyManager from "@/components/admin/facultyManager";
 import HeroManager from "@/components/admin/HeroManager";
 import VideosManager from "@/components/admin/VideosManager";
 import StudentManager from "@/components/admin/StudentManager";
+import NotificationSectionManager from "@/components/admin/NotificationSectionManager"
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
@@ -37,6 +39,7 @@ const tabs = [
   { id: "Hero", label: "Hero Management", icon: AppWindow },
   { id: "videos", label: "Videos Management", icon: AppWindow },
   { id: "students", label: "Students Management", icon: AppWindow },
+  { id: "notification", label: "Notification Management", icon: Bell },
 ] as const;
 
 type Tab = (typeof tabs)[number]["id"];
@@ -51,6 +54,7 @@ const panels: Record<Tab, React.FC> = {
   Hero: HeroManager,
   videos: VideosManager,
   students: StudentManager,
+  notification: NotificationSectionManager
 };
 
 export default function Admin() {

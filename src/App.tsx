@@ -8,10 +8,8 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import AdminLogin from "@/pages/AdminLogin";
 import NotFound from "./pages/NotFound";
-import StudyMaterialSection from "./components/StudyMaterialSection";
 import Navbar from "./components/Navbar";
 import About from "./pages/About";
-import Payment from "./pages/Payment";
 import UserLogin from "./pages/UserLogin";
 import Dashboard from "./pages/Dashboard";
 
@@ -84,9 +82,7 @@ function LayoutContent() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/userlogin" element={<UserLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/study-material" element={<StudyMaterialSection />} />
         <Route path="/about" element={<About />} />
-        <Route path="/payment" element={<Payment />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       </div>

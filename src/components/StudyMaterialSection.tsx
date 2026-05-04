@@ -1,111 +1,112 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, FileText, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, FileText, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabaseClient";
+import { useQuery } from "@tanstack/react-query";
 
-export default function StudyMaterialSection() {
+// 1. Interface definition
+interface StudyMaterialProps {
+  userClass: string;
+  onTotalCount?: (count: number) => void;
+  onSubjectCount?: (count: number) => void;
+}
 
-  const [materials, setMaterials] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedClass, setSelectedClass] = useState("");
+export default function StudyMaterialSection({ userClass, onTotalCount, onSubjectCount }: StudyMaterialProps) {
+
+  // ✅ States jo UI toggle ke liye chahiye
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [showMorePdfs, setShowMorePdfs] = useState(false);
-  const [videos, setVideos] = useState<any[]>([]);
-  const [showAllVideos, setShowAllVideos] = useState(false);
+  
+  // ✅ Pagination States
+  const [pdfPage, setPdfPage] = useState(1);
+  const [videoPage, setVideoPage] = useState(1);
+  const itemsPerPagePdf = 5;
+  const itemsPerPageVideo = 8;
 
-  // ✅ ONLY FETCH CONTENT (no auth logic)
-  useEffect(() => {
-    fetchContent();
-  }, []);
+  // ✅ REACT QUERY: Data fetch aur Cache ek saath
+  const { data: allContent, isLoading } = useQuery({
+    queryKey: ["study-materials", userClass], 
+    queryFn: async () => {
+      // 1. PDF Materials Fetching
+      const { data: matData } = await supabase
+        .from("Coaching-2_StudyMaterial")
+        .select("*")
+        .eq("student_class", userClass)
+        .order("created_at", { ascending: false });
+
+      // 2. Video Fetching
+      const { data: vidData } = await supabase
+        .from('video_lectures')
+        .select('*')
+        .or(`student_class.eq.${userClass},student_class.eq.All`)
+        .order('created_at', { ascending: false });
+
+      // Dashboard counts logic
+      if (matData) {
+        onTotalCount?.(matData.length);
+        if (matData.length > 0 && !selectedSubject) {
+          const firstSub = matData[0].subject;
+          setSelectedSubject(firstSub);
+          onSubjectCount?.(matData.filter(m => m.subject === firstSub).length);
+        }
+      }
+      return { materials: matData || [], videos: vidData || [] };
+    },
+    staleTime: 1000 * 60 * 30, // 30 Min Cache
+    gcTime: 1000 * 60 * 60,    // 1 Hour Memory
+  });
+
+  const materials = allContent?.materials || [];
+  const videos = allContent?.videos || [];
+
+useEffect(() => {
+  // Agar materials load ho chuke hain (cache se ya fetch se) 
+  // aur abhi koi subject selected nahi hai (mtlb user just tab switch karke aaya hai)
+  if (materials.length > 0 && !selectedSubject) {
+    const firstSub = materials[0].subject;
+    setSelectedSubject(firstSub);
+  }
+}, [materials, selectedSubject]);
+
+  const handleSubjectChange = (sub: string) => {
+    setSelectedSubject(sub);
+    setPdfPage(1); // Subject change par page reset
+    const count = materials.filter(m => m.subject === sub).length;
+    onSubjectCount?.(count);
+  };
 
   const handleDownload = async (filePath: string) => {
     const { data: { session } } = await supabase.auth.getSession();
-
     if (!session) {
       alert("Please login first");
       return;
     }
 
-    const { data: urlData, error } = await supabase
+    const { data: urlData } = await supabase
       .storage
       .from("coaching-2_private")
-      .createSignedUrl(filePath, 60);
+      .createSignedUrl(filePath, 300);
 
     if (urlData?.signedUrl) {
       window.open(urlData.signedUrl, '_blank');
     } else {
-      console.error("Error generating URL:", error);
       alert("Something Went Wrong, please try again.");
     }
   };
 
-  async function fetchContent() {
-    try {
-      setLoading(true);
+  // ✅ Filter logic
+  const subjectsForClass = [...new Set(materials.map((m) => m.subject))] as string[];
+  const filteredMaterials = materials.filter(m => m.subject === selectedSubject);
 
-      const { data: matData } = await supabase
-        .from("Coaching-2_StudyMaterial")
-        .select("*")
-        .order("created_at", { ascending: false });
+  // ✅ PDF Pagination Calculations
+  const totalPdfPages = Math.ceil(filteredMaterials.length / itemsPerPagePdf);
+  const currentPdfs = filteredMaterials.slice((pdfPage - 1) * itemsPerPagePdf, pdfPage * itemsPerPagePdf);
 
-      if (matData) {
-        setMaterials(matData);
+  // ✅ Video Pagination Calculations
+  const totalVideoPages = Math.ceil(videos.length / itemsPerPageVideo);
+  const currentVideos = videos.slice((videoPage - 1) * itemsPerPageVideo, videoPage * itemsPerPageVideo);
 
-        const uniqueClasses = [...new Set(matData.map((m: any) => m.student_class))] as string[];
-
-        if (uniqueClasses.length > 0) {
-          setSelectedClass(uniqueClasses[0]);
-
-          const firstSubject = matData.find(
-            (m: any) => m.student_class === uniqueClasses[0]
-          )?.subject;
-
-          setSelectedSubject(firstSubject || "");
-        }
-      }
-
-      const { data: vidData } = await supabase
-        .from('video_lectures')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (vidData) setVideos(vidData);
-
-    } catch (err) {
-      console.error("Content Fetch Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const classes = [...new Set(materials.map((m) => m.student_class))] as string[];
-
-  const subjectsForClass = [
-    ...new Set(
-      materials
-        .filter((m) => m.student_class === selectedClass)
-        .map((m) => m.subject)
-    ),
-  ] as string[];
-
-  const handleClassChange = (c: string) => {
-    setSelectedClass(c);
-
-    const firstSubject = materials.find(m => m.student_class === c)?.subject;
-    setSelectedSubject(firstSubject ?? "");
-
-    setShowMorePdfs(false);
-  };
-
-  const filtered = materials.filter(
-    m => m.student_class === selectedClass && m.subject === selectedSubject
-  );
-
-  const visiblePdfs = showMorePdfs ? filtered : filtered.slice(0, 6);
-  const visibleVideos = showAllVideos ? videos : videos.slice(0, 8);
-
-  if (loading)
+  if (isLoading)
     return (
       <div className="h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-primary" />
@@ -114,10 +115,8 @@ export default function StudyMaterialSection() {
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen">
-
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
 
-        {/* ✅ Study Material UI SAME */}
         <section id="material" className="relative py-8 mt-10 md:py-20 h-auto overflow-y-visible">
           <div className="container mx-auto px-4 pt-20 md:pt-0">
             <div className="text-center mb-10 px-4">
@@ -128,39 +127,18 @@ export default function StudyMaterialSection() {
 
             <div className="max-w-4xl mx-auto px-4 pb-20">
 
-              {/* Class */}
-              <div className="mb-8 text-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">
-                  Step 1: Select Your Class
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {classes.map((c: string) => (
-                    <button key={c} onClick={() => handleClassChange(c)}
-                      className={`px-5 py-2 rounded-xl font-bold transition-all ${
-                        selectedClass === c
-                          ? "bg-primary text-white shadow-md"
-                          : "bg-white border text-slate-500 hover:bg-slate-50"
-                      }`}>
-                      Class {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Subject */}
-              {selectedClass && (
-                <div className="mb-12 text-center animate-in fade-in duration-300">
+              {/* Subject Selection */}
+              {userClass && (
+                <div className="mb-12 text-center">
                   <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">
-                    Step 2: Choose Subject
+                    Select Subject for Class {userClass}
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {subjectsForClass.map((s: string) => (
-                      <button key={s} onClick={() => setSelectedSubject(s)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                          selectedSubject === s
-                            ? "bg-slate-800 text-white"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        }`}>
+                      <button 
+                        key={s} 
+                        onClick={() => handleSubjectChange(s)} 
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedSubject === s ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600"}`}>
                         {s}
                       </button>
                     ))}
@@ -168,42 +146,48 @@ export default function StudyMaterialSection() {
                 </div>
               )}
 
-              {/* PDFs */}
+              {/* PDFs List */}
               <div className="space-y-4">
                 <AnimatePresence mode="wait">
-                  {visiblePdfs.map((m: any) => (
+                  {currentPdfs.map((m: any) => (
                     <motion.div key={m.id}
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="group relative bg-white border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md">
-
                       <div className="flex items-center gap-4 w-full">
                         <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                           <FileText size={24} />
                         </div>
-
                         <div className="flex-1 text-left">
                           <p className="font-extrabold text-slate-800">{m.title}</p>
-                          <p className="text-sm text-gray-500">
-                            {m.subject} • Class {m.student_class}
-                          </p>
+                          <p className="text-sm text-gray-500">{m.subject} • Class {m.student_class}</p>
                         </div>
                       </div>
-
                       <Button onClick={() => handleDownload(m.file_url)}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
+                        <Download className="h-4 w-4 mr-2" /> Download
                       </Button>
-
                     </motion.div>
                   ))}
                 </AnimatePresence>
               </div>
 
-              {filtered.length > 6 && (
-                <div className="mt-8 text-center">
-                  <Button onClick={() => setShowMorePdfs(!showMorePdfs)}>
-                    {showMorePdfs ? "Show Less" : "Show More"}
+              {/* PDF Pagination Controls */}
+              {totalPdfPages > 1 && (
+                <div className="mt-10 flex flex-wrap justify-center items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPdfPage(p => Math.max(1, p - 1))} disabled={pdfPage === 1}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: totalPdfPages }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setPdfPage(i + 1)}
+                      className={`h-9 w-9 rounded-lg text-sm font-bold transition-all ${pdfPage === i + 1 ? "bg-primary text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setPdfPage(p => Math.min(totalPdfPages, p + 1))} disabled={pdfPage === totalPdfPages}>
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               )}
@@ -212,34 +196,45 @@ export default function StudyMaterialSection() {
           </div>
         </section>
 
-        {/* ✅ Video UI SAME */}
+        {/* Video UI */}
         <section className="py-20 bg-slate-50">
           <div className="container mx-auto px-6 max-w-7xl">
-
-            <h2 className="text-3xl md:text-5xl font-black text-center mb-12">
-              Video Lectures
-            </h2>
+            <h2 className="text-3xl md:text-5xl font-black text-center mb-12">Video Lectures</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {visibleVideos.map((vid) => (
+              {currentVideos.map((vid) => (
                 <a key={vid.id}
                   href={`https://www.youtube.com/watch?v=${vid.youtube_id}`}
                   target="_blank"
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm">
-
-                  <img
-                    src={`https://img.youtube.com/vi/${vid.youtube_id}/0.jpg`}
-                    alt={vid.title}
-                  />
-
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all">
+                  <img src={`https://img.youtube.com/vi/${vid.youtube_id}/0.jpg`} alt={vid.title} className="w-full h-48 object-cover" />
                   <div className="p-4">
-                    <p className="font-bold">{vid.title}</p>
+                    <p className="font-bold text-slate-800 line-clamp-2">{vid.title}</p>
                   </div>
-
                 </a>
               ))}
             </div>
 
+            {/* Video Pagination Controls */}
+            {totalVideoPages > 1 && (
+              <div className="mt-12 flex flex-wrap justify-center items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setVideoPage(p => Math.max(1, p - 1))} disabled={videoPage === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: totalVideoPages }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setVideoPage(i + 1)}
+                    className={`h-9 w-9 rounded-lg text-sm font-bold transition-all ${videoPage === i + 1 ? "bg-primary text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <Button variant="outline" size="sm" onClick={() => setVideoPage(p => Math.min(totalVideoPages, p + 1))} disabled={videoPage === totalVideoPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 

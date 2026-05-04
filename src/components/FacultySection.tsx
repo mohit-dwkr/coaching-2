@@ -1,40 +1,11 @@
 import { motion } from "framer-motion";
-import { User, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "@/supabaseClient"; // Path check kar lein
-import { BookOpen } from "lucide-react";
-export default function FacultySection() {
-  const [facultyData, setFacultyData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+import { User, BookOpen } from "lucide-react";
 
-  // Supabase se faculty data fetch karne ka logic
-  useEffect(() => {
-    async function fetchFaculty() {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("Coaching-2_Faculty")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        if (data) setFacultyData(data);
-      } catch (err) {
-        console.error("Faculty fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchFaculty();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className=" flex justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+// 🔥 Change: Ab ye 'data' prop le raha hai
+export default function FacultySection({ data: facultyData = [] }) {
+  
+  // Note: Loading aur Fetching logic ab Index.tsx handle kar raha hai,
+  // isliye useEffect, useState aur Loader2 yahan se remove kar diye gaye hain.
 
   return (
     <section id="faculty" className="py-24 bg-gradient-to-b from-white to-[#f0f7ff] relative overflow-hidden">
@@ -62,7 +33,7 @@ export default function FacultySection() {
             Meet <span className="text-blue-600">Our Faculty</span>
           </h2>
           <p className="mt-6 text-gray-500 max-w-2xl mx-auto md:text-lg text-sm leading-relaxed font-medium">
-           "Learn from Highly Experienced Educators Dedicated to Your Navodaya Success"
+            "Learn from Highly Experienced Educators Dedicated to Your Navodaya Success"
           </p>
         </motion.div>
 
@@ -86,7 +57,8 @@ export default function FacultySection() {
                     <img
                       src={f.image_url}
                       alt={f.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate"
+                      loading="lazy" // 🔥 Performance: Lazy loading for images below the fold
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-200">
@@ -101,7 +73,7 @@ export default function FacultySection() {
                     </div>
                   </div>
 
-                  {/* Social Media Overlay (Modern Touch) */}
+                  {/* Social Media Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-blue-400 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-center pb-8">
                     <div className="flex gap-3 translate-y-10 group-hover:translate-y-0 transition-transform duration-500">
                       <div className="p-3 rounded-full bg-white text-blue-600 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer shadow-lg">
@@ -125,14 +97,16 @@ export default function FacultySection() {
                 </div>
               </div>
 
-              {/* Background Shadow Glow (Decorative) */}
+              {/* Background Shadow Glow */}
               <div className="absolute -inset-2 bg-gradient-to-r from-primary to-blue-500 rounded-[3.5rem] opacity-0 group-hover:opacity-20 blur-2xl transition-opacity duration-500 -z-10" />
             </motion.div>
           ))}
         </div>
 
-        {!loading && facultyData.length === 0 && (
-          <p className="text-center text-muted-foreground mt-10">No faculty members added yet.</p>
+        {facultyData.length === 0 && (
+          <p className="text-center text-muted-foreground mt-10 font-medium tracking-wide text-gray-400">
+            No faculty members added yet.
+          </p>
         )}
       </div>
     </section>
