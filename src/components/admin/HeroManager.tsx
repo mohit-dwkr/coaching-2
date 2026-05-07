@@ -10,7 +10,7 @@ import { supabase } from "@/supabaseClient";
 const DEFAULT_HERO = {
   heading: "Where Excellence Meets Ambition",
   subheading: "Empowering K-12 students with expert coaching, proven results, and a clear path to academic greatness — for over 15 years.",
- image_url: "/hero.png",
+ image_url: "/hero.webp",
   highlight_word: "Excellence" // Default highlight word
 };
 

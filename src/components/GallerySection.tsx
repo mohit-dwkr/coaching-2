@@ -92,13 +92,16 @@ const displayedImages = gallery;
   const handleLoadMore = () => {
     setPage((prev) => prev + 1);
   };
+  
+const handleShowLess = () => {
+  setPage(0);
 
-  const handleShowLess = () => {
-    setPage(0);
-    document
-      .getElementById("gallery")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+  setGallery((prev) => prev.slice(0, 6));
+
+  document
+    .getElementById("gallery")
+    ?.scrollIntoView({ behavior: "smooth" });
+};
 
 return (
   <section
@@ -202,7 +205,7 @@ return (
       </div>
 
       {/* Buttons */}
-      {gallery.length > 6 && (
+      {(hasMore || gallery.length > 6) && (
         <div className="mt-10 flex justify-center">
 
           {hasMore ? (

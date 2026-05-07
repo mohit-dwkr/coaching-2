@@ -118,7 +118,7 @@ useEffect(() => {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
 
         <section id="material" className="relative  h-auto overflow-y-visible">
-          <div className="container mx-auto px-4 pt-8 md:pt-0">
+          <div className="container mx-auto px-4 md:pt-0">
             <div className="text-center mb-10 px-4">
               <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 leading-tight">
                 Study <span className="text-primary">Material</span>

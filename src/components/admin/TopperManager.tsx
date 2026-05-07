@@ -211,7 +211,7 @@ export default function TopperManager() {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 flex items-center gap-1"><BookOpen className="h-3 w-3"/> CLASS</label>
-                <Input placeholder="10th or 12th" value={form.student_class} onChange={(e) => setForm({ ...form, student_class: e.target.value })} className="h-11 bg-slate-50/50" />
+                <Input type="number" placeholder="10th or 12th" value={form.student_class} onChange={(e) => setForm({ ...form, student_class: e.target.value })} className="h-11 bg-slate-50/50" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 flex items-center gap-1"><Star className="h-3 w-3"/> PERCENTAGE</label>
@@ -258,7 +258,7 @@ export default function TopperManager() {
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-slate-800 truncate">{t.name}</h4>
                 <div className="flex flex-col mt-0.5">
-                   <span className="text-[11px] text-slate-500 font-medium italic">Class: {t.student_class}</span>
+                   <span className="text-[11px] text-slate-500 font-medium italic">Class: {t.student_class}th</span>
                    <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-blue-600">{t.percentage}%</span>
                     <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-bold">{t.batch_year}</span>

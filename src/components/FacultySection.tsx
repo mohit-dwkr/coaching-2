@@ -94,7 +94,12 @@ const handleShowMore = () => {
 // ✅ reset to first page
 const handleShowLess = () => {
   setPage(0);
-  setFacultyData([]);
+
+  setFacultyData(prev => prev.slice(0, 4));
+
+  document
+    .getElementById("faculty")
+    ?.scrollIntoView({ behavior: "smooth" });
 };
 
   return (

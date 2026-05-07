@@ -87,7 +87,7 @@ export default function Navbar() {
             }`}
         >
           <img
-            src="/logo.png"
+            src="/logo.webp"
             alt="Logo"
             className="h-8 w-8 md:h-10 md:w-10 object-contain rounded-full border-2 border-black flex-shrink-0"
           />

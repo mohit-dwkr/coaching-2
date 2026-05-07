@@ -14,7 +14,7 @@ export default function Footer() {
             <div className="flex items-center justify-center sm:justify-start gap-2 font-bold text-xl text-white">
               <div className="bg- p-1.5 rounded-lg">
                 <img
-            src="/logo.png"
+            src="/logo.webp"
             alt="Logo"
             className="h-8 w-8 md:h-10 md:w-10 object-contain rounded-full border-2 border-black flex-shrink-0"
           />

@@ -85,8 +85,8 @@ export default function BatchManager() {
           {editingId ? "Edit Batch Details" : "Add New Batch"}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Input placeholder="Name" value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value })} className="text-sm" />
-          <Input placeholder="Eligibility" value={form.subjects} onChange={(e) => setForm({ ...form, subjects: e.target.value })} className="text-sm" />
+          <Input type="number" placeholder="Class" value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value })} className="text-sm" />
+          <Input placeholder="Subject" value={form.subjects} onChange={(e) => setForm({ ...form, subjects: e.target.value })} className="text-sm" />
           <Input placeholder="Timing" value={form.timing} onChange={(e) => setForm({ ...form, timing: e.target.value })} className="text-sm" />
           <Input type="number" placeholder="Fees" value={form.fees} onChange={(e) => setForm({ ...form, fees: e.target.value })} className="text-sm" />
         </div>
@@ -115,7 +115,7 @@ export default function BatchManager() {
                   {b.class_name?.substring(0, 2)}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-slate-800 text-sm md:text-base truncate"> {b.class_name}</p>
+                  <p className="font-bold text-slate-800 text-sm md:text-base truncate">Class {b.class_name}th</p>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] md:text-xs text-slate-500">
                     <span className="truncate max-w-[120px] sm:max-w-none">{b.subjects}</span>
                     <span className="hidden xs:inline">|</span>

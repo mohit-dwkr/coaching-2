@@ -88,7 +88,7 @@ const About = () => {
           <div className="bg-blue-950 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden max-w-7xl mx-auto text-white">
             <div className="grid md:grid-cols-5 gap-8 items-center relative z-10">
               <div className="md:col-span-2 mx-auto">
-                <img src="/Director.png" alt="Director" className="w-full max-w-[300px] rounded-2xl shadow-xl aspect-[4/5] object-cover border-white" />
+                <img src="/Director.webp" alt="Director" className="w-full max-w-[300px] rounded-2xl shadow-xl aspect-[4/5] object-cover border-white" />
               </div>
               <div className="md:col-span-3 text-center md:text-left">
                 <div className="border-l-4 border-white pl-6 mb-8 hidden md:block">

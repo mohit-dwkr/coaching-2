@@ -103,8 +103,8 @@ export default function BatchCards() {
                 <div className="flex justify-between items-center mb-8 relative z-10">
                   <div className="relative">
                     <div className="absolute inset-0 bg-primary blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <div className="relative px-6 py-2 rounded-2xl bg-black text-white text-[12px] font-black tracking-[0.2em] md:uppercase shadow-sm">
-                        {b.class_name}
+                    <div className="relative px-6 py-2 rounded-2xl bg-slate-900 text-white text-[12px] font-black tracking-[0.2em] shadow-sm">
+                       Class {b.class_name}th
                     </div>
                   </div>
                 </div>

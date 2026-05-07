@@ -71,7 +71,7 @@ export default function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src={(heroData?.image_url || "/hero.png") + "?width=1200&quality=70"}
+          src={(heroData?.image_url || "/hero.webp") + "?width=1200&quality=70"}
           alt="Classroom Background"
           loading="eager"
           className="w-full h-full object-cover object-[85%_center]"

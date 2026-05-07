@@ -92,12 +92,14 @@ const displayedToppers = toppers;
     setPage((prev) => prev + 1);
   };
 
-  const handleShowLess = () => {
-    setPage(0);
-    document
-      .getElementById("results")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+const handleShowLess = () => {
+  setPage(0);
+  setToppers((prev) => prev.slice(0, 8));
+
+  document
+    .getElementById("results")
+    ?.scrollIntoView({ behavior: "smooth" });
+};
 
  return (
   <section
@@ -192,14 +194,14 @@ const displayedToppers = toppers;
 
               {/* Info */}
               <div className="p-3 md:p-5 text-center">
-                <h3 className="font-black text-gray-800 text-sm md:text-xl tracking-tight group-hover:text-yellow-600 transition-colors line-clamp-1">
+                <h3 className="font-black text-gray-800 text-sm md:text-xl tracking-tight group-hover:text-yellow-600 transition-colors line-clamp-1 ">
                   {t.name}
                 </h3>
 
                 <div className="flex flex-col gap-1 mt-1 md:mt-2">
-                  <div className="inline-flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  <div className="inline-flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold text-gray-600  tracking-widest">
                     <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-primary" />
-                    Class {t.student_class}
+                    Class {t.student_class}th
                   </div>
 
                   <div className="text-[8px] md:text-[10px] font-black text-yellow-600 uppercase bg-yellow-50/50 self-center px-2 md:px-3 py-0.5 md:py-1 rounded-full border border-yellow-100/50">
@@ -216,7 +218,7 @@ const displayedToppers = toppers;
       </div>
 
       {/* Buttons */}
-      {toppers.length > 8 && (
+     {(hasMore || toppers.length > 8) && (
         <div className="mt-14 text-center relative z-10">
           {hasMore ? (
             <Button
