@@ -160,15 +160,6 @@ export default function Navbar() {
             About Us
           </Link>
 
-          <button
-            className={`ml-1 rounded-full px-4 py-2 font-bold shadow-lg transition-all duration-300 hover:scale-105 border-2 
-    ${!isSolid
-                ? "border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-                : "border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white bg-transparent"
-              }`}
-          >
-            <a className="font-semibold text-sm" href="/payment">Pay Fees</a>
-          </button>
 
           <Button size="lg" className={`ml-4 rounded-full px-4 shadow-lg transition-transform hover:scale-105 bg-blue-600 hover:bg-blue-700 ${!isSolid && "bg-white text-blue-600 hover:bg-gray-100 border-none"
             }`} asChild>
@@ -269,20 +260,6 @@ export default function Navbar() {
           <Link to="/about" onClick={() => setOpen(false)} className="block py-3 text-base font-semibold border-b border-border/50 text-foreground">
             About Us
           </Link>
-
-          <Link to="/payment" onClick={() => setOpen(false)} className="block py-3 text-base font-semibold border-b border-border/50 text-foreground">
-            Pay Fees
-          </Link>
-
-          {/* <button 
-  className={`ml-1 rounded-full px-4 py-2 font-bold shadow-lg transition-all duration-300 hover:scale-105 border-2 
-    ${!isSolid 
-      ? "border-white text-white hover:bg-white hover:text-blue-500 bg-transparent" 
-      : "border-blue-500 text-blue-600 hover:bg-blue-600 hover:text-white bg-transparent"
-    }`}
->
-  <a className= "font-semibold text-sm" href="/payment">Pay Fees</a>
-</button> */}
 
           <Button size="lg" className="mt-6 w-full rounded-xl" asChild>
             <a href="/#contact" onClick={() => setOpen(false)}>

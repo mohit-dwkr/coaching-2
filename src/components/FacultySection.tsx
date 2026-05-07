@@ -30,7 +30,7 @@ useEffect(() => {
         observer.unobserve(entry.target); // 🔥 stop observing after first load
       }
     },
-    { rootMargin: "200px" }
+    { rootMargin: "100px" }
   );
 
   if (section) observer.observe(section);
