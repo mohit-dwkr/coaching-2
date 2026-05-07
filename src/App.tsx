@@ -62,7 +62,8 @@ function ScrollToHash() {
 
 function LayoutContent() {
   const location = useLocation();
-  const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login";
+  const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login" ||
+  location.pathname === "/dashboard";
 
   return (
     <>

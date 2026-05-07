@@ -117,8 +117,8 @@ useEffect(() => {
     <div className="bg-[#F8FAFC] min-h-screen">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
 
-        <section id="material" className="relative py-8 mt-10 md:py-20 h-auto overflow-y-visible">
-          <div className="container mx-auto px-4 pt-20 md:pt-0">
+        <section id="material" className="relative  h-auto overflow-y-visible">
+          <div className="container mx-auto px-4 pt-8 md:pt-0">
             <div className="text-center mb-10 px-4">
               <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 leading-tight">
                 Study <span className="text-primary">Material</span>
@@ -130,7 +130,7 @@ useEffect(() => {
               {/* Subject Selection */}
               {userClass && (
                 <div className="mb-12 text-center">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">
+                  <p className="text-[10px] font-bold text-slate-600 uppercase mb-4 tracking-widest">
                     Select Subject for Class {userClass}
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
@@ -160,7 +160,7 @@ useEffect(() => {
                         </div>
                         <div className="flex-1 text-left">
                           <p className="font-extrabold text-slate-800">{m.title}</p>
-                          <p className="text-sm text-gray-500">{m.subject} • Class {m.student_class}</p>
+                          <p className="text-sm text-gray-800">{m.subject} <span className="text-sm text-gray-500">• Class {m.student_class}</span> </p>
                         </div>
                       </div>
                       <Button onClick={() => handleDownload(m.file_url)}>
@@ -199,7 +199,7 @@ useEffect(() => {
         {/* Video UI */}
         <section className="py-20 bg-slate-50">
           <div className="container mx-auto px-6 max-w-7xl">
-            <h2 className="text-3xl md:text-5xl font-black text-center mb-12">Video Lectures</h2>
+            <h2 className="text-3xl md:text-5xl font-black text-center mb-12">Video <span className="text-blue-700">Lectures</span> </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {currentVideos.map((vid) => (

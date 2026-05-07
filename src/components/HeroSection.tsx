@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, Clock } from "lucide-react";
+import { supabase } from "@/supabaseClient";
+import { useQuery } from "@tanstack/react-query";
 
 const stats = [
   { icon: Users, value: "4000+", label: "Students Taught" },
@@ -8,17 +10,35 @@ const stats = [
   { icon: Clock, value: "40+", label: "Years of Excellence (Since-1985)" },
 ];
 
-// 🔥 Change: Ab ye 'data' prop le raha hai
-export default function HeroSection({ data: heroData }) {
-  
-  // Render logic ko waisa hi rakha hai bas 'loading' state ki ab zarurat nahi
+export default function HeroSection() {
+
+  // ✅ Fetch + Cache (1 hour)
+  const { data } = useQuery({
+    queryKey: ["hero"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Coaching-2_Hero")
+        .select("heading, subheading, highlight_word, image_url")
+        .limit(1);
+
+      if (error) throw error;
+      return data?.[0] || null;
+    },
+    staleTime: 1000 * 60 * 60,   // 1 hour
+    gcTime: 1000 * 60 * 60 * 2 
+  });
+
+  const heroData = data;
+
   const renderHeading = () => {
     const rawHeading = heroData?.heading || "Where Excellence Meets Ambition";
     const highlightWord = heroData?.highlight_word || ""; 
     const words = rawHeading.split(/\s+/).filter(Boolean);
 
     return words.map((word, index) => {
-      const isHighlighted = word.toLowerCase().replace(/[^\w]/g, '') === highlightWord.toLowerCase().replace(/[^\w]/g, '');
+      const isHighlighted =
+        word.toLowerCase().replace(/[^\w]/g, '') ===
+        highlightWord.toLowerCase().replace(/[^\w]/g, '');
 
       return (
         <span key={index}>
@@ -47,12 +67,12 @@ export default function HeroSection({ data: heroData }) {
 
   return (
     <section id="home" className="relative w-full h-screen min-h-[700px] flex items-center overflow-visible">
-      {/* Background Image Optimization */}
+      
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src={heroData?.image_url || "/hero.png"} 
+          src={(heroData?.image_url || "/hero.png") + "?width=1200&quality=70"}
           alt="Classroom Background"
-          // 🔥 Performance Tip: Hero image ke liye 'priority' use karein ya 'loading="eager"'
           loading="eager"
           className="w-full h-full object-cover object-[85%_center]"
         />

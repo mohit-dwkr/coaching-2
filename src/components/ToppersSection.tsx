@@ -1,150 +1,150 @@
 import { motion } from "framer-motion";
-import { Award, ChevronDown, ChevronUp, Trophy } from "lucide-react";
-import { useState } from "react";
+import { Award, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/supabaseClient";
+import { useQuery } from "@tanstack/react-query";
 
-// 🔥 Change: Ab ye 'data' prop le raha hai
-export default function ToppersSection({ data: toppers = [] }) {
-  
+type TopperType = {
+  id: string;
+  name: string;
+  image_url: string;
+  percentage: number;
+  student_class: string;
+  batch_year: string;
+};
 
-  // Note: Loading aur Fetching logic ab Index.tsx handle kar raha hai.
-  // displayedToppers logic ko waisa hi rakha hai taaki Toggle kaam kare.
+export default function ToppersSection() {
+  const [page, setPage] = useState(0);
+  const [toppers, setToppers] = useState<TopperType[]>([]);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const [limit, setLimit] = useState(8);
-  const displayedToppers = toppers.slice(0, limit);
+  // ✅ Scroll detect (only once)
+  useEffect(() => {
+    const section = document.getElementById("results");
+    if (!section) return;
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(section);
+
+   return () => {
+  if (section) observer.unobserve(section);
+};
+  }, []);
+
+  // ✅ Fetch + cache
+  const {
+    data = [],
+    isError,
+  } = useQuery<TopperType[]>({
+    queryKey: ["toppers", page],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Coaching-2_Toppers")
+        .select("id, name, image_url, percentage, student_class, batch_year")
+        .order("created_at", { ascending: false })
+        .range(page * 8, page * 8 + 7);
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: isVisible,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 2,
+    placeholderData: (prev) => prev,
+  });
+
+  // ✅ Error UI
+  if (isError) {
+    return <p className="text-center py-10 text-red-500">Error loading toppers</p>;
+  }
+
+  // ✅ Append safely (no duplicates)
+  useEffect(() => {
+    if (data.length > 0) {
+      setToppers((prev) => {
+        const ids = new Set(prev.map((item) => item.id));
+        const newItems = data.filter((item) => !ids.has(item.id));
+        return [...prev, ...newItems];
+      });
+    }
+  }, [data]);
+
+  // ✅ Reset fix
+  useEffect(() => {
+    if (page === 0 && data.length > 0) {
+      setToppers(data);
+    }
+  }, [page, data]);
+
+  const hasMore = data.length === 8;
+const displayedToppers = toppers;
   const handleLoadMore = () => {
-    setLimit((prev) => prev + 8); // Har baar 8 naye cards khulenge
+    setPage((prev) => prev + 1);
+  };
+
+  const handleShowLess = () => {
+    setPage(0);
+    document
+      .getElementById("results")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <section id="results" className="py-36 bg-white relative overflow-hidden">
-      {/* Decorative Achievement background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-5 pointer-events-none -z-10">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-yellow-400 rounded-full blur-[120px]" />
-        <div className="absolute bottom-20 right-10 w-64 h-64 bg-primary rounded-full blur-[120px]" />
-      </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 text-[10px] font-black tracking-widest uppercase mb-4 shadow-sm border border-yellow-200">
-            <Trophy className="w-3 h-3" /> Wall of Fame
-          </div>
-          <h2 className="text-[32px] leading-tight md:text-6xl font-black text-gray-900 tracking-tight mt-4">
-            Meet Our <span className="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-orange-500 to-yellow-600 whitespace-nowrap">Legendary Toppers</span>
-          </h2>
-          <p className="mt-6 text-gray-500 max-w-xl mx-auto text-lg leading-relaxed font-medium">
-            "Meet Our Navodaya Achievers Who Made Their Dreams a Reality"
-          </p>
-        </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
           {displayedToppers.map((t, i) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ y: -12 }}
-              className="group relative"
-            >
-              <div className="relative z-10 bg-white rounded-[2rem] md:rounded-[2.5rem] p-2 md:p-3 shadow-[0_15px_35px_-15px_rgba(0,0,0,0.08)] group-hover:shadow-[0_25px_50px_-12px_rgba(234,179,8,0.2)] border border-gray-100 transition-all duration-500 overflow-hidden">
+            <motion.div key={t.id} className="group relative">
 
-                <div className="relative aspect-square w-full rounded-[1.6rem] md:rounded-[2rem] overflow-hidden bg-gray-50 shadow-inner">
-                  {t.image_url ? (
-                    <img
-                      src={t.image_url}
-                      alt={t.name}
-                      loading="lazy" // 🔥 Performance optimization
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                      <Award className="h-12 w-12 md:h-16 md:w-16 text-yellow-500/30 group-hover:scale-110 transition-transform duration-500" />
-                    </div>
-                  )}
-
-                  {t.percentage && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 md:bottom-auto md:top-3 md:right-3 md:left-auto md:translate-x-0 z-20">
-                      <div className="px-3 py-1 md:px-4 md:py-2 rounded-full md:rounded-2xl bg-black/70 md:bg-black/40 backdrop-blur-md text-white border border-white/20 shadow-xl flex items-center justify-center whitespace-nowrap">
-                        <span className="text-[10px] md:text-lg font-black tracking-tighter">
-                          {t.percentage}%
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-
-                <div className="p-3 md:p-5 text-center">
-                  <h3 className="font-black text-gray-800 text-sm md:text-xl tracking-tight group-hover:text-yellow-600 transition-colors line-clamp-1">
-                    {t.name}
-                  </h3>
-
-                  <div className="flex flex-col gap-1 mt-1 md:mt-2">
-                    <div className="inline-flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-widest">
-                      <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-primary" /> Class {t.student_class}
-                    </div>
-                    {t.batch_year && (
-                      <div className="text-[8px] md:text-[10px] font-black text-yellow-600 uppercase bg-yellow-50/50 self-center px-2 md:px-3 py-0.5 md:py-1 rounded-full border border-yellow-100/50">
-                        {t.batch_year}
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+                {t.image_url ? (
+                  <img
+                    src={t.image_url + "?width=400&quality=70"}
+                    alt={t.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Award className="h-16 w-16 text-yellow-500/30" />
+                )}
               </div>
 
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-600 rounded-[2.2rem] md:rounded-[2.7rem] opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-500 -z-0" />
+              <div className="p-3 text-center">
+                <h3>{t.name}</h3>
+                <p>Class {t.student_class}</p>
+              </div>
+
             </motion.div>
           ))}
         </div>
 
-        {/* --- Button Section Start --- */}
+        {/* Buttons */}
         {toppers.length > 8 && (
-          <div className="mt-14 text-center relative z-10">
-            {limit < toppers.length ? (
-              /* Load More Button: Jab tak data baki hai */
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleLoadMore}
-                className="group h-16 rounded-[2rem] px-12 border-2 border-gray-200 bg-white text-gray-700 font-black hover:border-yellow-500 hover:text-yellow-600 hover:bg-yellow-50/50 transition-all duration-300 shadow-sm hover:shadow-[0_15px_30px_-10px_rgba(234,179,8,0.2)] uppercase tracking-widest text-xs relative overflow-hidden"
-              >
-                <span className="absolute inset-0 w-0 bg-yellow-50 transition-all duration-300 group-hover:w-full -z-10" />
-                <div className="flex items-center gap-3">
-                  Load More Legends <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-1" />
-                </div>
+          <div className="mt-14 text-center">
+            {hasMore ? (
+              <Button onClick={handleLoadMore}>
+                Load More <ChevronDown />
               </Button>
             ) : (
-              /* Show Less Button: Jab poori list load ho jaye */
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => {
-                  setLimit(8);
-                  document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="group h-16 rounded-[2rem] px-12 text-gray-500 hover:text-yellow-600 font-black uppercase tracking-widest text-xs transition-all duration-300"
-              >
-                <div className="flex items-center gap-3">
-                  Show Less <ChevronUp className="h-5 w-5 transition-transform group-hover:-translate-y-1" />
-                </div>
+              <Button onClick={handleShowLess}>
+                Show Less <ChevronUp />
               </Button>
             )}
           </div>
         )}
-        {/* --- Button Section End --- */}
 
-        {toppers.length === 0 && (
-          <p className="text-center text-muted-foreground mt-10 font-medium text-gray-400">No results to show yet.</p>
-        )}
       </div>
     </section>
   );

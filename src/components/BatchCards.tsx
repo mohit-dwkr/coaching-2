@@ -2,13 +2,46 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Clock, IndianRupee, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { supabase } from "@/supabaseClient";
+import { useQuery } from "@tanstack/react-query";
 
-// 🔥 Change: Ab ye 'data' prop le raha hai (jise humne 'batches' name diya hai)
-export default function BatchCards({ data: batches = [] }) {
+// ✅ Type added
+type BatchType = {
+  id: string;
+  class_name: string;
+  subjects: string;
+  start_time: string;
+  end_time: string;
+  price: number;
+};
+
+export default function BatchCards() {
   const [showAll, setShowAll] = useState(false);
 
-  // Note: Loading state ab Index.tsx handle kar raha hai, 
-  // toh yahan se Loader2 aur fetching logic poori tarah remove kar di gayi hai.
+  // ✅ Fetch + Cache (1 hour)
+  const { data: batches = [], isError } = useQuery<BatchType[]>({
+    queryKey: ["batches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Coaching-2_Batches")
+        .select("id, class_name, subjects, start_time, end_time, price")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 2,
+  });
+
+  // ✅ Optional error UI
+  if (isError) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        Failed to load batches
+      </div>
+    );
+  }
 
   const displayedBatches = showAll ? batches : batches.slice(0, 6);
 
@@ -65,7 +98,6 @@ export default function BatchCards({ data: batches = [] }) {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="group relative bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/50 p-8 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] hover:shadow-[0_40px_80px_-30px_rgba(59,130,246,0.25)] transition-all duration-500 overflow-hidden"
               >
-                {/* Visuals and Content (Keep as is) */}
                 <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_50%)] from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
                 <div className="flex justify-between items-center mb-8 relative z-10">
