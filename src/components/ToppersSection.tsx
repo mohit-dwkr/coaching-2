@@ -225,12 +225,12 @@ const handleShowLess = () => {
               variant="outline"
               size="lg"
               onClick={handleLoadMore}
-              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-200 bg-white text-gray-700 font-black hover:border-yellow-500 hover:text-yellow-600 hover:bg-yellow-50/50 transition-all duration-300 shadow-sm hover:shadow-[0_15px_30px_-10px_rgba(234,179,8,0.2)] uppercase tracking-widest text-xs relative overflow-hidden"
+              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-200 bg-white text-gray-700 font-black hover:border-yellow-500 hover:text-yellow-600 hover:bg-yellow-50/50 transition-all duration-300 shadow-sm hover:shadow-[0_15px_30px_-10px_rgba(234,179,8,0.2)]  tracking-widest text-sm relative overflow-hidden"
             >
               <span className="absolute inset-0 w-0 bg-yellow-50 transition-all duration-300 group-hover:w-full -z-10" />
 
               <div className="flex items-center gap-3">
-                Load More
+                Show More
                 <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-1" />
               </div>
             </Button>
@@ -239,7 +239,7 @@ const handleShowLess = () => {
               variant="outline"
               size="lg"
               onClick={handleShowLess}
-              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-200 bg-white text-gray-700 font-black hover:border-yellow-500 hover:text-yellow-600 hover:bg-yellow-50/50 transition-all duration-300 shadow-sm hover:shadow-[0_15px_30px_-10px_rgba(234,179,8,0.2)] uppercase tracking-widest text-xs relative overflow-hidden"
+              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-200 bg-white text-gray-700 font-black hover:border-yellow-500 hover:text-yellow-600 hover:bg-yellow-50/50 transition-all duration-300 shadow-sm hover:shadow-[0_15px_30px_-10px_rgba(234,179,8,0.2)] tracking-widest text-sm relative overflow-hidden"
             >
               <span className="absolute inset-0 w-0 bg-yellow-50 transition-all duration-300 group-hover:w-full -z-10" />
 

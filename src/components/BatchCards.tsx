@@ -172,12 +172,12 @@ export default function BatchCards() {
               variant="outline" 
               size="lg" 
               onClick={() => setShowAll(!showAll)}
-              className="h-14 rounded-2xl px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm"
+              className="h-14 rounded-full px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm"
             >
               {showAll ? (
-                <>Show Less <ChevronUp className="ml-2 h-5 w-5" /></>
+                <>Show Less<ChevronUp className="ml-2 h-5 w-5" /></>
               ) : (
-                <>Show All Batches <ChevronDown className="ml-2 h-5 w-5" /></>
+                <>Show More<ChevronDown className="ml-2 h-5 w-5" /></>
               )}
             </Button>
           </div>

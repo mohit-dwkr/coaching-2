@@ -10,6 +10,7 @@ export default function FacultyManager() {
   const [facultyList, setFacultyList] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [oldImageUrl, setOldImageUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -36,6 +37,7 @@ export default function FacultyManager() {
 
     try {
       setLoading(true);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `faculty_images/${fileName}`;
@@ -45,6 +47,20 @@ export default function FacultyManager() {
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
+
+      // Upload successful hone ke baad old image delete karo
+    if (isEditing && oldImageUrl) {
+      const oldPath = oldImageUrl.split(
+        "/storage/v1/object/public/coaching-2_data/"
+      )[1];
+
+      if (oldPath) {
+        await supabase.storage
+          .from("coaching-2_data")
+          .remove([oldPath]);
+      }
+    }
+
 
       const { data } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
       setFormData({ ...formData, image: data.publicUrl });
@@ -101,18 +117,43 @@ export default function FacultyManager() {
       experience: member.experience_years.toString(),
       image: member.image_url || "",
     });
+    setOldImageUrl(member.image_url || "");
     setIsEditing(member.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remove this faculty?")) return;
-    const { error } = await supabase.from("Coaching-2_Faculty").delete().eq("id", id);
-    if (!error) {
-      fetchFaculty();
-      toast.error("Faculty removed");
+const handleDelete = async (faculty: any) => {
+  if (!confirm("Remove this faculty?")) return;
+
+  try {
+    // Delete image from bucket
+    if (faculty.image_url) {
+      const imagePath = faculty.image_url.split(
+        "/storage/v1/object/public/coaching-2_data/"
+      )[1];
+
+      if (imagePath) {
+        await supabase.storage
+          .from("coaching-2_data")
+          .remove([imagePath]);
+      }
     }
-  };
+
+    // Delete database row
+    const { error } = await supabase
+      .from("Coaching-2_Faculty")
+      .delete()
+      .eq("id", faculty.id);
+
+    if (error) throw error;
+
+    fetchFaculty();
+
+    toast.success("Faculty removed");
+  } catch (err) {
+    toast.error("Failed to delete faculty");
+  }
+};
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
@@ -198,7 +239,7 @@ export default function FacultyManager() {
                 </div>
                 <div className="flex flex-col gap-1 pr-3">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(f)} className="h-8 w-8 text-slate-400 hover:text-orange-500"><Pencil className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(f.id)} className="h-8 w-8 text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(f)} className="h-8 w-8 text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </CardContent>
             </Card>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, BookOpen } from "lucide-react";
+import { User, BookOpen, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -198,11 +198,11 @@ const handleShowLess = () => {
         {/* Buttons */}
         <div className="text-center mt-10">
           {hasMore ? (
-            <button onClick={handleShowMore} className="px-6 py-3 bg-blue-600 text-white rounded-xl">
-              Show More
+            <button onClick={handleShowMore} className="h-14 rounded-full px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm">
+              Show More 
             </button>
           ) : facultyData.length > 4 ? (
-            <button onClick={handleShowLess} className="px-6 py-3 bg-gray-600 text-white rounded-xl">
+            <button onClick={handleShowLess} className="h-14 rounded-full px-10 border-2 border-gray-200 text-gray-700 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm">
               Show Less
             </button>
           ) : null}

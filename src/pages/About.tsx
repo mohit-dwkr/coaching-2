@@ -6,10 +6,10 @@ import FacultySection from '@/components/FacultySection';
 const About = () => {
   // Static content in English
   const content = {
-    heroTag: "About Harikamlansh Academy",
+    heroTag: "About Toppers Academy",
 
     heroTitle: "Empowering Students For,",
-    heroSpan: "Navodaya & Sainik School",
+    heroSpan: "Competetive Exams",
 
     heroDesc: "Harikamlansh Academy is more than a coaching institute. It's a platform where concepts meet clarity and dreams transform into reality through disciplined guidance.",
 
@@ -24,10 +24,10 @@ const About = () => {
       { label: "Years Excellence", value: "40+" },
     ],
 
-    directorName: "Dr. Bhanu Prakash",
+    directorName: "Mohit Diwakar",
     directorTitle: "Founder & Managing Director",
     directorMsg: "Message From Director",
-    directorQuote: '"At Harikamlansh Academy, we don\'t just prepare you for exams; we prepare you for life. We focus on building a foundation so strong that no competition feels too difficult."',
+    directorQuote: '"At Toppers Academy, we don\'t just prepare you for exams; we prepare you for life. We focus on building a foundation so strong that no competition feels too difficult."',
 
     coursesTitle: "Our Offered Courses",
     courseList: [
@@ -48,7 +48,7 @@ const About = () => {
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-900 mb-8 leading-[1.2]">
             {content.heroTitle} <br />
-            <span className="text-yellow-400 md:text-5xl">
+            <span className="text-blue-600 md:text-5xl">
               {content.heroSpan}
             </span>
           </h1>
@@ -117,7 +117,7 @@ const About = () => {
               <h2 className="text-2xl md:text-4xl font-black text-slate-900">
                 {content.coursesTitle.split(' ')[0]} <span className='text-blue-600'>{content.coursesTitle.split(' ').slice(1).join(' ')}</span>
               </h2>
-              <hr className="mt-4 border-t-2 border-yellow-400 opacity-100" />
+              <hr className="mt-4 border-t-2 border-blue-400 opacity-100" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {content.courseList.map((course, i) => (

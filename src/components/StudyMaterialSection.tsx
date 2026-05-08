@@ -163,7 +163,7 @@ useEffect(() => {
                           <p className="text-sm text-gray-800">{m.subject} <span className="text-sm text-gray-500">• Class {m.student_class}</span> </p>
                         </div>
                       </div>
-                      <Button onClick={() => handleDownload(m.file_url)}>
+                      <Button className="w-full md:w-auto" onClick={() => handleDownload(m.file_url)}>
                         <Download className="h-4 w-4 mr-2" /> Download
                       </Button>
                     </motion.div>

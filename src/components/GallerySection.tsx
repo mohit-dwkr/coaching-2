@@ -213,7 +213,7 @@ return (
               variant="outline"
               size="lg"
               onClick={handleLoadMore}
-              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-100 bg-white text-gray-700 font-black hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm hover:shadow-primary/20 uppercase tracking-[0.15em] text-[10px] md:text-xs relative overflow-hidden"
+              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-200 bg-white text-gray-700 font-black hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm hover:shadow-primary/20  tracking-[0.15em] text-[14px] md:text-sm relative overflow-hidden"
             >
 
               <span className="absolute inset-0 w-0 bg-primary/5 transition-all duration-300 group-hover:w-full -z-10" />
@@ -229,7 +229,7 @@ return (
               variant="outline"
               size="lg"
               onClick={handleShowLess}
-              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-100 bg-white text-gray-700 font-black hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm hover:shadow-primary/20 uppercase tracking-[0.15em] text-[10px] md:text-xs relative overflow-hidden"
+              className="group h-16 rounded-[2rem] px-12 border-2 border-gray-100 bg-white text-gray-700 font-black hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 shadow-sm hover:shadow-primary/20  tracking-[0.15em] text-[14px] md:text-sm relative overflow-hidden"
             >
 
               <span className="absolute inset-0 w-0 bg-primary/5 transition-all duration-300 group-hover:w-full -z-10" />
