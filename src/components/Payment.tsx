@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from "sonner";
 import { QrCode, Smartphone, Copy, CheckCircle, MessageCircle } from 'lucide-react';
 
 const Payment = () => {
@@ -12,7 +13,7 @@ const Payment = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert("Copied: " + text);
+    toast.success("Copied: " + text);
   };
 
 const handleWhatsAppRedirect = () => {

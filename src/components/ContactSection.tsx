@@ -3,21 +3,32 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Phone, Mail, Loader2, CheckCircle2 } from "lucide-react"; 
-import { supabase } from "@/supabaseClient"; 
+import { MapPin, Phone, Mail, Loader2 } from "lucide-react";
+import { supabase } from "@/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
 
 export default function ContactSection() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Basic form fields
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  // Dropdown states
+  const [category, setCategory] = React.useState("");
+  const [selectedClass, setSelectedClass] = React.useState("");
+  const [displaySubject, setDisplaySubject] = useState("");
+  
+  // Naya state: Class/Exam ki details store karne ke liye
+  const [courseInfo, setCourseInfo] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!form.name.trim() || !form.phone.trim()) {
-      toast({ title: "Please fill required fields", variant: "destructive" });
+    // Validation: Name, Phone aur Email teeno check kar rahe hain
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
+      toast({ title: "Please fill all required fields", variant: "destructive" });
       return;
     }
 
@@ -29,24 +40,27 @@ export default function ContactSection() {
         .insert([
           {
             name: form.name,
-            email: form.email,
+            email: form.email, // Ab yahan asli email jayega
             phone: form.phone,
-            message: form.message,
+            // Course details ko hum message ke sath merge kar ke bhej rahe hain
+            message: `[COURSE: ${courseInfo}] | Message: ${form.message}`,
           },
         ]);
 
       if (error) throw error;
-      
+
       toast({
         title: "Inquiry Sent!",
         description: "We'll get back to you soon.",
         className: "bg-blue-600 text-white border-none max-w-[300px] p-4 shadow-2xl",
       });
 
+      // Reset form and all states
       setForm({ name: "", email: "", phone: "", message: "" });
       setCategory("");
       setSelectedClass("");
       setDisplaySubject("");
+      setCourseInfo("");
 
     } catch (error: any) {
       toast({
@@ -59,10 +73,6 @@ export default function ContactSection() {
     }
   };
 
-  const [category, setCategory] = React.useState(""); 
-  const [selectedClass, setSelectedClass] = React.useState("");
-  const [displaySubject, setDisplaySubject] = useState("");
-  
   return (
     <section id="contact" className="py-24 bg-slate-50/50 overflow-hidden">
       <div className="container mx-auto px-4">
@@ -79,12 +89,11 @@ export default function ContactSection() {
             Apply for <span className="text-blue-600">Admission</span>
           </h2>
           <p className="mt-4 text-slate-600 max-w-2xl mx-auto text-md">
-           "Fill the digital enrollment form below to secure your seat for the 2026-27 session. Our team will contact you."
+            "Fill the digital enrollment form below to secure your seat for the 2026-27 session. Our team will contact you."
           </p>
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto items-start">
-          {/* Form Card */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -94,14 +103,14 @@ export default function ContactSection() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  placeholder="Your Name *"
+                  placeholder="Your Name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-12"
                   disabled={isSubmitting}
                 />
                 <Input
-                  placeholder="Phone Number *"
+                  placeholder="Phone Number"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-12"
@@ -109,14 +118,24 @@ export default function ContactSection() {
                 />
               </div>
 
+              {/* ASLI EMAIL INPUT (Iska data ab overwrite nahi hoga) */}
+              <Input
+                type="email"
+                placeholder="Your email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="bg-slate-50 border-slate-200 focus:bg-white transition-all h-12 w-full"
+                disabled={isSubmitting}
+              />
+
               <div className="space-y-4">
-                <select 
+                <select
                   value={category}
                   onChange={(e) => {
                     setCategory(e.target.value);
                     setSelectedClass("");
-                    setDisplaySubject(""); 
-                    setForm({ ...form, email: "" }); 
+                    setDisplaySubject("");
+                    setCourseInfo(""); // Clear course details on change
                   }}
                   className="w-full p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
                 >
@@ -127,36 +146,32 @@ export default function ContactSection() {
 
                 {category === "school" && (
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-4">
-                    <select 
+                    <select
                       value={selectedClass}
                       onChange={(e) => {
-                          setSelectedClass(e.target.value);
-                          setDisplaySubject(""); 
+                        setSelectedClass(e.target.value);
+                        setDisplaySubject("");
                       }}
                       className="p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none"
                     >
                       <option value="">Select Class</option>
-                      {[5,6,7,8,9,10,11,12].map(num => (
+                      {[5, 6, 7, 8, 9, 10, 11, 12].map(num => (
                         <option key={num} value={num}>{num}th Standard</option>
                       ))}
                     </select>
 
-                    <select 
+                    <select
                       disabled={!selectedClass}
-                      value={displaySubject} 
+                      value={displaySubject}
                       onChange={(e) => {
                         const sub = e.target.value;
-                        setDisplaySubject(sub); 
-                        setForm({ ...form, email: `Class ${selectedClass}: ${sub}` }); 
+                        setDisplaySubject(sub);
+                        // FIXED: Email ke bajaye courseInfo update kar rahe hain
+                        setCourseInfo(`School: ${selectedClass}th, Subject: ${sub}`);
                       }}
                       className="p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none disabled:opacity-50"
                     >
-                      {/* <option value="">Select Subject/Exam</option>
-                       <option value="Navodaya entrance exam">Navodaya Entrance Exam</option>
-                       <option value="Sainik school entrance">Sainik School Entrance Exam</option>
-                       <option value="Shramodaya school entrance exam">Shramodaya School Entrance Exam</option>
-                       <option value="Rastriya military school entrance exam">Rastriya Military School Entrance Exam</option>
-                   */}
+                      <option value="">Select Subject</option>
                       <option value="Mathematics">Mathematics</option>
                       <option value="Science">Science</option>
                       <option value="Physics">Physics</option>
@@ -167,21 +182,22 @@ export default function ContactSection() {
                 )}
 
                 {category === "competitive" && (
-                  <motion.select 
+                  <motion.select
                     initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                    value={displaySubject} 
+                    value={displaySubject}
                     onChange={(e) => {
                       const exam = e.target.value;
                       setDisplaySubject(exam);
-                      setForm({ ...form, email: `Competitive: ${exam}` });
+                      // FIXED: Email ke bajaye courseInfo update kar rahe hain
+                      setCourseInfo(`Competitive: ${exam}`);
                     }}
                     className="w-full p-3 h-12 rounded-md border border-slate-200 bg-slate-50 text-sm outline-none"
                   >
                     <option value="">Select Target Exam</option>
                     <option value="Navodaya entrance exam">Navodaya Entrance Exam</option>
-                       <option value="Sainik school entrance">Sainik School Entrance Exam</option>
-                       <option value="Shramodaya school entrance exam">Shramodaya School Entrance Exam</option>
-                       <option value="Rastriya military school entrance xam">Rastriya Military School Entrance Exam</option>
+                    <option value="Sainik school entrance">Sainik School Entrance Exam</option>
+                    <option value="Shramodaya school entrance exam">Shramodaya School Entrance Exam</option>
+                    <option value="Rastriya military school entrance xam">Rastriya Military School Entrance Exam</option>
                   </motion.select>
                 )}
               </div>
@@ -197,7 +213,7 @@ export default function ContactSection() {
 
               <Button type="submit" size="lg" className="w-full bg-blue-600 hover:bg-blue-700 h-12 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-blue-200" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying...</>
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending...</>
                 ) : (
                   "Submit Admission Form"
                 )}
@@ -208,7 +224,7 @@ export default function ContactSection() {
             </form>
           </motion.div>
 
-          {/* Info + Map */}
+          {/* Info + Map Section */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -263,6 +279,3 @@ export default function ContactSection() {
     </section>
   );
 }
-
-
- 

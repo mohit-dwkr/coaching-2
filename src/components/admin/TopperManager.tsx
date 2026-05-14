@@ -67,7 +67,7 @@ export default function TopperManager() {
       const { data } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
       
       setForm({ ...form, image: data.publicUrl });
-      toast.success("New photo uploaded & old one replaced!");
+      toast.success("New photo uploaded!");
     } catch (error: any) {
       toast.error("Upload failed: " + error.message);
     } finally {
@@ -171,8 +171,8 @@ export default function TopperManager() {
           <Trophy className="h-6 w-6" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Topper Management</h2>
-          <p className="text-sm text-slate-500">Edit student records and keep storage clean</p>
+          <h2 className="text-2xl font-bold text-slate-900">Toppers Manager</h2>
+          <p className="text-sm text-slate-500">Add, Edit And Delete Toppers</p>
         </div>
       </div>
 
@@ -201,7 +201,7 @@ export default function TopperManager() {
                 {loading && <div className="absolute inset-0 bg-white/60 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}
               </div>
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
-              <span className="text-[10px] font-bold text-slate-400 text-center uppercase">Upload from Device</span>
+              <span className="text-[10px] font-bold text-slate-500 text-center uppercase">Upload from Device</span>
             </div>
 
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,7 +258,7 @@ export default function TopperManager() {
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-slate-800 truncate">{t.name}</h4>
                 <div className="flex flex-col mt-0.5">
-                   <span className="text-[11px] text-slate-500 font-medium italic">Class: {t.student_class}th</span>
+                   <span className="text-[11px] text-slate-500 font-medium italic">Class {t.student_class}</span>
                    <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-blue-600">{t.percentage}%</span>
                     <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-bold">{t.batch_year}</span>

@@ -124,7 +124,7 @@ export default function GalleryManager() {
       
       if (error) throw error;
       
-      toast.error("Image and record removed");
+      toast.success("Image removed");
       fetchGallery();
     } catch (error: any) {
       toast.error("Delete failed: " + error.message);
@@ -148,7 +148,7 @@ export default function GalleryManager() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-600 ml-1">Image URL (Paste or Upload)</label>
+              <label className="text-[11px] font-semibold text-slate-600 ml-1">Paste Image URL Or Upload From Device</label>
               <div className="flex gap-2">
                 <Input 
                   className="rounded-xl border-slate-200 text-sm h-11 md:h-10" 

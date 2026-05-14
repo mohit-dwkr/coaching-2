@@ -60,7 +60,7 @@ export default function InquiryInbox() {
       {/* Header Area */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-5 gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Student Inquiries</h2>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Student Inquiries</h2>
           <p className="text-slate-500 text-xs md:text-sm mt-1">Manage and respond to potential student leads</p>
         </div>
         <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-2xl font-bold text-xs md:text-sm self-start sm:self-auto">
@@ -75,7 +75,7 @@ export default function InquiryInbox() {
           </div>
           <h3 className="text-slate-800 font-bold text-lg">Your inbox is empty</h3>
           <p className="text-slate-500 max-w-xs mx-auto text-sm mt-1">
-            When students fill out the contact form, their messages will appear here.
+            When students fill out the Admission form, their messages will appear here.
           </p>
         </div>
       ) : (

@@ -74,8 +74,8 @@ export default function BatchManager() {
     <div className="w-full max-w-6xl mx-auto p-4 md:p-0 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Batch Management</h2>
-          <p className="text-slate-500 text-sm mt-1">Admin Panel: Database sync is active.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Batch Manager</h2>
+          <p className="text-slate-500 text-sm mt-1">Add, Edit And Delete Batches.</p>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function BatchManager() {
                   {b.class_name?.substring(0, 2)}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-slate-800 text-sm md:text-base truncate">Class {b.class_name}th</p>
+                  <p className="font-bold text-slate-800 text-sm md:text-base truncate">Class {b.class_name}</p>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] md:text-xs text-slate-500">
                     <span className="truncate max-w-[120px] sm:max-w-none">{b.subjects}</span>
                     <span className="hidden xs:inline">|</span>

@@ -64,7 +64,7 @@ export default function FacultyManager() {
 
       const { data } = supabase.storage.from('coaching-2_data').getPublicUrl(filePath);
       setFormData({ ...formData, image: data.publicUrl });
-      toast.success("Image uploaded to cloud!");
+      toast.success("Image uploaded Successfully!");
     } catch (error: any) {
       toast.error("Upload failed: " + error.message);
     } finally {
@@ -90,7 +90,7 @@ export default function FacultyManager() {
     try {
       if (isEditing) {
         await supabase.from("Coaching-2_Faculty").update(dbPayload).eq("id", isEditing);
-        toast.success("Profile updated!");
+        toast.success("Faculty updated!");
       } else {
         await supabase.from("Coaching-2_Faculty").insert([dbPayload]);
         toast.success("New faculty added!");
@@ -177,7 +177,7 @@ const handleDelete = async (faculty: any) => {
                   ) : (
                     <div className="text-center p-4">
                       <ImageIcon className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-                      <p className="text-[10px] font-bold text-slate-500 uppercase">Click to Upload</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Upload From Device</p>
                     </div>
                   )}
                   {loading && <div className="absolute inset-0 bg-white/60 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}
@@ -235,7 +235,7 @@ const handleDelete = async (faculty: any) => {
                 <div className="flex-1 px-4 py-2 min-w-0">
                   <h4 className="font-bold text-slate-800 truncate">{f.name}</h4>
                   <p className="text-[11px] text-primary font-extrabold uppercase mb-1">{f.subject}</p>
-                  <p className="text-[10px] text-slate-400 flex items-center gap-1"><Briefcase className="h-3 w-3" /> {f.experience_years} Years</p>
+                  <p className="text-[10px] text-slate-500 flex items-center gap-1"><Briefcase className="h-3 w-3" /> {f.experience_years} Years</p>
                 </div>
                 <div className="flex flex-col gap-1 pr-3">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(f)} className="h-8 w-8 text-slate-400 hover:text-orange-500"><Pencil className="h-4 w-4" /></Button>

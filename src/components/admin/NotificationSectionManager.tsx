@@ -5,6 +5,7 @@ import {
   Users, User, Calendar, MessageSquare, X 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {toast} from "sonner"
 
 const NotificationSectionManager = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -45,12 +46,12 @@ const NotificationSectionManager = () => {
         .from('Coaching-2_Notifications')
         .update(payload)
         .eq('id', editingId);
-      if (!error) alert('Notification Updated!');
+      if (!error) toast.success('Notification Updated!');
     } else {
       const { error } = await supabase
         .from('Coaching-2_Notifications')
         .insert([payload]);
-      if (!error) alert('Notification Sent!');
+      if (!error) toast.success('Notification Sent!');
     }
 
     resetForm();
@@ -96,8 +97,8 @@ const NotificationSectionManager = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-black text-blue-900">Notification Center</h1>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Admin Control Panel</p>
+          <h1 className="text-2xl font-black text-slate-900">Notification Manager</h1>
+          <p className="text-xs font-bold text-slate-400">Send Updates And Notification To Students</p>
         </div>
       </div>
 
@@ -106,9 +107,9 @@ const NotificationSectionManager = () => {
         {/* Left: Create/Edit Form */}
         <div className="lg:col-span-5">
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-blue-50 sticky top-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2">
               {editingId ? <Edit3 size={20} className="text-blue-600"/> : <Plus size={20} className="text-blue-600"/>}
-              {editingId ? 'Edit Notification' : 'Create New Broadcast'}
+              {editingId ? 'Edit Notification' : 'Create New Notification'}
             </h2>
 
             <div className="space-y-5">
@@ -128,7 +129,7 @@ const NotificationSectionManager = () => {
                 </div>
 
                 <div className={`transition-opacity ${isAll ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-                  <label className="text-[10px] font-black text-blue-400 uppercase ml-1">Specific Class (Numbers only)</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Specific Class</label>
                   <input 
                     type="number"
                     placeholder="e.g. 10"
@@ -143,7 +144,7 @@ const NotificationSectionManager = () => {
 
               {/* Title */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Notification Title</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Notification Title</label>
                 <input 
                   type="text"
                   placeholder="Enter catchy title..."
@@ -156,7 +157,7 @@ const NotificationSectionManager = () => {
 
               {/* Message */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Detailed Message</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Detailed Message</label>
                 <textarea 
                   placeholder="Write your message here..."
                   value={message}

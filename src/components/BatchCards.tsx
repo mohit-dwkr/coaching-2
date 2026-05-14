@@ -104,7 +104,7 @@ export default function BatchCards() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-primary blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
                     <div className="relative px-6 py-2 rounded-2xl bg-slate-900 text-white text-[12px] font-black tracking-[0.2em] shadow-sm">
-                       Class {b.class_name}th
+                       Class {b.class_name}
                     </div>
                   </div>
                 </div>

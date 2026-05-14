@@ -539,7 +539,7 @@ export default function Dashboard() {
               </p>
 
               <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">
-                Class {profile?.class}th
+                Class {profile?.class}
               </p>
             </div>
 
@@ -564,7 +564,7 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-2">Pending Approval</h3>
                 <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">
-                  Welcome, <span className="text-blue-600 font-bold">{profile?.name}</span>! Our team is verifying your profile for Class {profile?.class}.
+                  Welcome, <span className="text-blue-600 font-bold">{profile?.name}</span>! Our team is verifying your profile for Class <span className="text-blue-600 font-bold">{profile?.class}</span>.Once the verification is complete, all your study materials will be show right here.
                 </p>
               </motion.div>
             ) : (
@@ -615,7 +615,7 @@ export default function Dashboard() {
                     {/* Yahan change hai: isEditing true ho AUR field email NA ho, tabhi input dikhao */}
                     {isEditing && field.key !== "email" ? (
                       <input
-                        type="text"
+                       type={field.key === "class" ? "number" : "text"}
                         value={editData[field.key as keyof typeof editData]}
                         onChange={(e) => setEditData({ ...editData, [field.key]: e.target.value })}
                         className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm font-bold outline-none focus:ring-2 ring-blue-100"

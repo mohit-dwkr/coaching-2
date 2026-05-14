@@ -201,7 +201,7 @@ const handleShowLess = () => {
                 <div className="flex flex-col gap-1 mt-1 md:mt-2">
                   <div className="inline-flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold text-gray-600  tracking-widest">
                     <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-primary" />
-                    Class {t.student_class}th
+                    Class {t.student_class}
                   </div>
 
                   <div className="text-[8px] md:text-[10px] font-black text-yellow-600 uppercase bg-yellow-50/50 self-center px-2 md:px-3 py-0.5 md:py-1 rounded-full border border-yellow-100/50">

@@ -16,6 +16,15 @@ export default function StudyMaterialManager() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+const [filterClass, setFilterClass] = useState<string>("all");
+const [filterSubject, setFilterSubject] = useState<string>("all");
+
+const filteredList = materials.filter((m) => {
+  const matchClass = filterClass === "all" || m.student_class === filterClass;
+  const matchSubject = filterSubject === "all" || m.subject === filterSubject;
+  return matchClass && matchSubject;
+});
+
   const fetchMaterials = async () => {
     const { data } = await supabase
       .from("Coaching-2_StudyMaterial")
@@ -162,7 +171,7 @@ export default function StudyMaterialManager() {
       const { error } = await supabase.from("Coaching-2_StudyMaterial").delete().eq("id", id);
       if (error) throw error;
 
-      toast.error("Material deleted from storage and list");
+      toast.success("Material deleted!");
       fetchMaterials();
     } catch (error: any) {
       toast.error("Delete failed: " + error.message);
@@ -210,7 +219,7 @@ export default function StudyMaterialManager() {
               </select>
             ) : (
               <div className="relative">
-                <Input className="rounded-xl pr-10 h-11 md:h-10 text-sm" placeholder="Type Class" value={form.student_class} onChange={(e) => setForm({ ...form, student_class: e.target.value })} />
+                <Input type="number" className="rounded-xl pr-10 h-11 md:h-10 text-sm" placeholder="Type Class" value={form.student_class} onChange={(e) => setForm({ ...form, student_class: e.target.value })} />
                 <button onClick={() => setIsManualClass(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
               </div>
             )}
@@ -246,7 +255,7 @@ export default function StudyMaterialManager() {
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-600 ml-1">PDF File / URL</label>
             <div className="flex gap-2">
-              <Input className="rounded-xl flex-1 text-xs h-11 md:h-10" placeholder="Paste link or upload" value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} />
+              <Input className="rounded-xl flex-1 text-xs h-11 md:h-10" placeholder="Paste link or upload from device" value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} />
               <input type="file" accept=".pdf" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
               <Button variant="outline" type="button" className="rounded-xl shrink-0 border-slate-200 h-11 md:h-10 px-3" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                 {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
@@ -268,52 +277,102 @@ export default function StudyMaterialManager() {
         </div>
       </div>
 
-      <div className="space-y-4 pb-10">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 ml-1">All Materials ({materials.length})</h3>
-        {materials.map((m) => (
-          <div key={m.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 md:p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary/40 transition-all shadow-sm gap-4">
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all">
-                <FileText className="h-5 w-5 md:h-6 md:w-6" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-bold text-slate-800 text-sm md:text-base truncate">{m.title}</p>
-                <div className="flex items-center gap-2 text-[11px] md:text-xs font-medium text-slate-400 mt-0.5">
-                  <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-bold whitespace-nowrap">Class {m.student_class}</span>
-                  <span className="hidden xs:inline">•</span>
-                  <span className="truncate">{m.subject}</span>
-                </div>
-              </div>
-            </div>
 
-            <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0">
-              <div className="flex gap-1">
-                <Button size="icon" variant="ghost" className="rounded-lg h-9 w-9 text-slate-400 hover:bg-primary/10 hover:text-primary" onClick={() => startEdit(m)}>
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="ghost" className="rounded-lg h-9 w-9 text-slate-400 hover:bg-destructive/10 hover:text-destructive" onClick={() => remove(m.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-lg text-[11px] font-bold h-9 px-4"
-                onClick={() => handleView(m.file_url)}
-              >
-                View File
-              </Button>
-            </div>
-          </div>
+<div className="space-y-4 pb-10">
+  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
+      All Materials ({filteredList.length})
+    </h3>
+
+    {/* Filter Section */}
+    <div className="flex flex-wrap gap-2">
+      {/* Class Filters */}
+      <div className="flex bg-slate-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
+        <button
+          onClick={() => { setFilterClass("all"); setFilterSubject("all"); }}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${filterClass === "all" ? "bg-white shadow-sm text-primary" : "text-slate-500"}`}
+        >
+          All Classes
+        </button>
+        {availableClasses.sort().map((c) => (
+          <button
+            key={c}
+            onClick={() => { setFilterClass(c); setFilterSubject("all"); }}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap ${filterClass === c ? "bg-white shadow-sm text-primary" : "text-slate-500"}`}
+          >
+            Class {c}
+          </button>
         ))}
-
-        {materials.length === 0 && !isUploading && (
-          <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-            <FileText className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm italic">No study materials found.</p>
-          </div>
-        )}
       </div>
+
+      {/* Subject Filters - Only shows if a class is selected */}
+      {filterClass !== "all" && (
+        <div className="flex bg-blue-50 p-1 rounded-xl overflow-x-auto no-scrollbar border border-blue-100">
+          <button
+            onClick={() => setFilterSubject("all")}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${filterSubject === "all" ? "bg-blue-600 text-white" : "text-blue-600"}`}
+          >
+            All Subjects
+          </button>
+          {[...new Set(materials.filter(m => m.student_class === filterClass).map(m => m.subject))].map((s) => (
+            <button
+              key={s}
+              onClick={() => setFilterSubject(s)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap ${filterSubject === s ? "bg-blue-600 text-white" : "text-blue-600"}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Filtered List Mapping */}
+  {filteredList.map((m) => (
+    <div key={m.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 md:p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary/40 transition-all shadow-sm gap-4">
+      <div className="flex items-center gap-4">
+        <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all">
+          <FileText className="h-5 w-5 md:h-6 md:w-6" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-bold text-slate-800 text-sm md:text-base truncate">{m.title}</p>
+          <div className="flex items-center gap-2 text-[11px] md:text-xs font-medium text-slate-400 mt-0.5">
+            <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-bold whitespace-nowrap">Class {m.student_class}</span>
+            <span className="hidden xs:inline">•</span>
+            <span className="truncate">{m.subject}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0">
+        <div className="flex gap-1">
+          <Button size="icon" variant="ghost" className="rounded-lg h-9 w-9 text-slate-400 hover:bg-primary/10 hover:text-primary" onClick={() => startEdit(m)}>
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button size="icon" variant="ghost" className="rounded-lg h-9 w-9 text-slate-400 hover:bg-destructive/10 hover:text-destructive" onClick={() => remove(m.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-lg text-[11px] font-bold h-9 px-4"
+          onClick={() => handleView(m.file_url)}
+        >
+          View File
+        </Button>
+      </div>
+    </div>
+  ))}
+
+  {filteredList.length === 0 && (
+    <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+      <FileText className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+      <p className="text-slate-400 text-sm italic">No materials found for this selection.</p>
+    </div>
+  )}
+</div>
     </div>
   );
 }

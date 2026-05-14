@@ -16,7 +16,7 @@ import {
   Bell
 } from "lucide-react";
 
-import { supabase } from"@/supabaseClient";
+import { supabase } from "@/supabaseClient";
 import BatchManager from "@/components/admin/BatchManager";
 import GalleryManager from "@/components/admin/GalleryManager";
 import StudyMaterialManager from "@/components/admin/StudyMaterialManager";
@@ -30,16 +30,16 @@ import NotificationSectionManager from "@/components/admin/NotificationSectionMa
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
-  { id: "batches", label: "Manage Batches", icon: BookOpen },
-  { id: "gallery", label: "Gallery Photos", icon: Image },
-  { id: "material", label: "Study Material", icon: FileText },
-  { id: "toppers", label: "Toppers & Results", icon: Trophy },
+  { id: "Hero", label: "Hero Manager", icon: AppWindow },
+  { id: "batches", label: "Batch Manager", icon: BookOpen },
+  { id: "faculty", label: "Faculty Manager", icon: User },
+  { id: "toppers", label: "Toppers Manager", icon: Trophy },
+  { id: "gallery", label: "Gallery Manager", icon: Image },
   { id: "inbox", label: "Student Inquiries", icon: Inbox },
-  { id: "faculty", label: "Faculty Management", icon: User },
-  { id: "Hero", label: "Hero Management", icon: AppWindow },
-  { id: "videos", label: "Videos Management", icon: AppWindow },
-  { id: "students", label: "Students Management", icon: AppWindow },
-  { id: "notification", label: "Notification Management", icon: Bell },
+  { id: "students", label: "Students Manager", icon: AppWindow },
+  { id: "material", label: "Study Material Manager", icon: FileText },
+  { id: "videos", label: "Videos Manager", icon: AppWindow },
+  { id: "notification", label: "Notification Manager", icon: Bell },
 ] as const;
 
 type Tab = (typeof tabs)[number]["id"];
@@ -58,7 +58,7 @@ const panels: Record<Tab, React.FC> = {
 };
 
 export default function Admin() {
-  const [active, setActive] = useState<Tab>("batches");
+  const [active, setActive] = useState<Tab>("Hero");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -67,24 +67,24 @@ export default function Admin() {
   // 🔐 Protect Admin Route
   useEffect(() => {
     const checkUser = async () => {
-   const { data } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getUser();
 
-if (!data.user) {
-  navigate("/admin-login");
-  return;
-}
+      if (!data.user) {
+        navigate("/admin-login");
+        return;
+      }
 
-const { data: adminData, error } = await supabase
-  .from("admins")
-  .select("email")
-  .eq("email", data.user.email)
-  .maybeSingle();
+      const { data: adminData, error } = await supabase
+        .from("admins")
+        .select("email")
+        .eq("email", data.user.email)
+        .maybeSingle();
 
-if (error || !adminData) {
-  navigate("/admin-login");
-} else {
-  setLoading(false);
-}
+      if (error || !adminData) {
+        navigate("/admin-login");
+      } else {
+        setLoading(false);
+      }
     }
     checkUser();
   }, [navigate]);
@@ -146,11 +146,10 @@ if (error || !adminData) {
               <button
                 key={t.id}
                 onClick={() => handleTabChange(t.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                  IsActive
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${IsActive
                     ? "bg-primary text-white"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
+                    : "text-slate-600 hover:bg-slate-100"
+                  }`}
               >
                 <t.icon className="h-5 w-5" />
                 {t.label}
@@ -173,7 +172,7 @@ if (error || !adminData) {
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <header className="bg-white border-b h-16 flex items-center justify-between px-6">
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(true)}
             className="lg:hidden"
           >

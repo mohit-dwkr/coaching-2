@@ -4,6 +4,7 @@ import { Download, FileText, Loader2, ChevronDown, ChevronUp, ChevronLeft, Chevr
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner"
 
 // 1. Interface definition
 interface StudyMaterialProps {
@@ -16,7 +17,7 @@ export default function StudyMaterialSection({ userClass, onTotalCount, onSubjec
 
   // ✅ States jo UI toggle ke liye chahiye
   const [selectedSubject, setSelectedSubject] = useState("");
-  
+
   // ✅ Pagination States
   const [pdfPage, setPdfPage] = useState(1);
   const [videoPage, setVideoPage] = useState(1);
@@ -25,7 +26,7 @@ export default function StudyMaterialSection({ userClass, onTotalCount, onSubjec
 
   // ✅ REACT QUERY: Data fetch aur Cache ek saath
   const { data: allContent, isLoading } = useQuery({
-    queryKey: ["study-materials", userClass], 
+    queryKey: ["study-materials", userClass],
     queryFn: async () => {
       // 1. PDF Materials Fetching
       const { data: matData } = await supabase
@@ -59,14 +60,14 @@ export default function StudyMaterialSection({ userClass, onTotalCount, onSubjec
   const materials = allContent?.materials || [];
   const videos = allContent?.videos || [];
 
-useEffect(() => {
-  // Agar materials load ho chuke hain (cache se ya fetch se) 
-  // aur abhi koi subject selected nahi hai (mtlb user just tab switch karke aaya hai)
-  if (materials.length > 0 && !selectedSubject) {
-    const firstSub = materials[0].subject;
-    setSelectedSubject(firstSub);
-  }
-}, [materials, selectedSubject]);
+  useEffect(() => {
+    // Agar materials load ho chuke hain (cache se ya fetch se) 
+    // aur abhi koi subject selected nahi hai (mtlb user just tab switch karke aaya hai)
+    if (materials.length > 0 && !selectedSubject) {
+      const firstSub = materials[0].subject;
+      setSelectedSubject(firstSub);
+    }
+  }, [materials, selectedSubject]);
 
   const handleSubjectChange = (sub: string) => {
     setSelectedSubject(sub);
@@ -78,7 +79,7 @@ useEffect(() => {
   const handleDownload = async (filePath: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      alert("Please login first");
+      toast.error("Please login first");
       return;
     }
 
@@ -90,7 +91,7 @@ useEffect(() => {
     if (urlData?.signedUrl) {
       window.open(urlData.signedUrl, '_blank');
     } else {
-      alert("Something Went Wrong, please try again.");
+      toast.error("Something Went Wrong, please try again.");
     }
   };
 
@@ -127,17 +128,17 @@ useEffect(() => {
 
             <div className="max-w-4xl mx-auto px-4 pb-20">
 
-              {/* Subject Selection */}
-              {userClass && (
+              {/* Subject Selection - Sirf tab dikhega jab subjects honge */}
+              {userClass && subjectsForClass.length > 0 && (
                 <div className="mb-12 text-center">
                   <p className="text-[10px] font-bold text-slate-600 uppercase mb-4 tracking-widest">
                     Select Subject for Class {userClass}
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {subjectsForClass.map((s: string) => (
-                      <button 
-                        key={s} 
-                        onClick={() => handleSubjectChange(s)} 
+                      <button
+                        key={s}
+                        onClick={() => handleSubjectChange(s)}
                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedSubject === s ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600"}`}>
                         {s}
                       </button>
@@ -149,25 +150,31 @@ useEffect(() => {
               {/* PDFs List */}
               <div className="space-y-4">
                 <AnimatePresence mode="wait">
-                  {currentPdfs.map((m: any) => (
-                    <motion.div key={m.id}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="group relative bg-white border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md">
-                      <div className="flex items-center gap-4 w-full">
-                        <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                          <FileText size={24} />
+                  {currentPdfs.length > 0 ? (
+                    currentPdfs.map((m: any) => (
+                      <motion.div key={m.id}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="group relative bg-white border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md">
+                        <div className="flex items-center gap-4 w-full">
+                          <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                            <FileText size={24} />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className="font-extrabold text-slate-800">{m.title}</p>
+                            <p className="text-sm text-gray-800">{m.subject} <span className="text-sm text-gray-500">• Class {m.student_class}</span> </p>
+                          </div>
                         </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-extrabold text-slate-800">{m.title}</p>
-                          <p className="text-sm text-gray-800">{m.subject} <span className="text-sm text-gray-500">• Class {m.student_class}</span> </p>
-                        </div>
-                      </div>
-                      <Button className="w-full md:w-auto" onClick={() => handleDownload(m.file_url)}>
-                        <Download className="h-4 w-4 mr-2" /> Download
-                      </Button>
-                    </motion.div>
-                  ))}
+                        <Button className="w-full md:w-auto" onClick={() => handleDownload(m.file_url)}>
+                          <Download className="h-4 w-4 mr-2" /> Download
+                        </Button>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200">
+                      <p className="text-slate-500 font-medium">No notes available for your class yet.</p>
+                    </div>
+                  )}
                 </AnimatePresence>
               </div>
 
@@ -202,17 +209,24 @@ useEffect(() => {
             <h2 className="text-3xl md:text-5xl font-black text-center mb-12">Video <span className="text-blue-700">Lectures</span> </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {currentVideos.map((vid) => (
-                <a key={vid.id}
-                  href={`https://www.youtube.com/watch?v=${vid.youtube_id}`}
-                  target="_blank"
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all">
-                  <img src={`https://img.youtube.com/vi/${vid.youtube_id}/0.jpg`} alt={vid.title} className="w-full h-48 object-cover" />
-                  <div className="p-4">
-                    <p className="font-bold text-slate-800 line-clamp-2">{vid.title}</p>
-                  </div>
-                </a>
-              ))}
+              {currentVideos.length > 0 ? (
+                currentVideos.map((vid) => (
+                  <a key={vid.id}
+                    href={`https://www.youtube.com/watch?v=${vid.youtube_id}`}
+                    target="_blank"
+                    className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all">
+                    <img src={`https://img.youtube.com/vi/${vid.youtube_id}/0.jpg`} alt={vid.title} className="w-full h-48 object-cover" />
+                    <div className="p-4">
+                      <p className="font-bold text-slate-800 line-clamp-2">{vid.title}</p>
+                    </div>
+                  </a>
+                ))
+              ) : (
+                /* Empty state: Isko col-span-full diya hai taaki ye poori width le sake bina layout bigade */
+                <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
+                  <p className="text-slate-500 font-bold">No video lectures available for your class yet.</p>
+                </div>
+              )}
             </div>
 
             {/* Video Pagination Controls */}

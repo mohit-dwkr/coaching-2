@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {toast} from "sonner"
 
 const StudentManager = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -28,7 +29,7 @@ const StudentManager = () => {
       if (error) throw error;
       setStudents(data || []);
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ const StudentManager = () => {
     await fetchRequests(); // 🔥 IMPORTANT
 
   } catch (err: any) {
-    alert("Approval failed: " + err.message);
+    toast.error("Approval failed: " + err.message);
   }
 };
   // 2. Delete Function (Pending ya Approved dono ke liye)
@@ -67,7 +68,7 @@ const StudentManager = () => {
     await fetchRequests(); // 🔥 IMPORTANT
 
   } catch (err: any) {
-    alert("Delete failed: " + err.message);
+    toast.error("Delete failed: " + err.message);
   }
 };
 
@@ -92,9 +93,9 @@ const StudentManager = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
             <Users className="text-blue-600" size={32} />
-            STUDENT <span className="text-blue-600">MANAGER</span>
+            Student Manager
           </h1>
-          <p className="text-slate-500 font-medium text-sm">Manage Student Study Material Access</p>
+          <p className="text-slate-500 font-medium text-sm">Manage Student's Study Material Access</p>
         </div>
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -150,15 +151,15 @@ const StudentManager = () => {
         <div className="lg:col-span-7 space-y-4">
           <h2 className="font-bold text-slate-700 uppercase text-[10px] tracking-[0.2em] mb-4 flex items-center gap-2 px-1">
             <div className="h-2 w-2 rounded-full bg-blue-600" />
-            Approved Access ({approved.length})
+            Approved Students ({approved.length})
           </h2>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left table-fixed">
-              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400">
+              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-500">
                 <tr>
 
-                  <th className="p-3 sm:p-5 w-[60%] sm:w-auto">Student Lists</th>
+                  <th className="p-3 sm:p-5 w-[60%] sm:w-auto">Students List</th>
 
                 </tr>
               </thead>
@@ -176,7 +177,7 @@ const StudentManager = () => {
 
                       <td className="p-3 sm:p-5">
                         <div className="flex flex-col gap-1">
-                          <p className="font-bold text-slate-900 text-sm truncate uppercase tracking-tight">
+                          <p className="font-bold text-slate-800 text-sm truncate uppercase tracking-tight">
                             {s.name}
                           </p>
                           <div className="flex flex-wrap items-center gap-2">
@@ -191,7 +192,10 @@ const StudentManager = () => {
                         </div>
                       </td>
 
-                      
+<div>
+  <hr className="h-0.5 w-96 bg-slate-200 border-none" />
+</div>
+
                       <td className="p-3 sm:p-5 text-center align-middle">
                         <button
                           onClick={() => deleteRequest(s.id)}

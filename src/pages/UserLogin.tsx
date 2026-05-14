@@ -268,7 +268,7 @@ if (!studentClass) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
               >
-                <div className="text-center mb-10">
+                <div className="text-center mt-12">
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white mb-5 shadow-lg shadow-blue-100">
                     <User size={28} />
                   </div>
@@ -291,22 +291,22 @@ if (!studentClass) {
                   {/* KEEP ALL YOUR EXISTING INPUT UI SAME */}
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                    <input placeholder="Full Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium" />
+                    <input placeholder="Full Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-1 focus:ring-blue-600 outline-none transition-all font-medium" />
                   </div>
 
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                    <input type="email" placeholder="Email Address" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium" />
+                    <input type="email" placeholder="Email Address" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-1 focus:ring-blue-600 outline-none transition-all font-medium" />
                   </div>
 
                   <div className="relative group">
                     <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                    <input placeholder="Mobile Number" required value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium" />
+                    <input placeholder="Mobile Number" required value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-1 focus:ring-blue-600 outline-none transition-all font-medium" />
                   </div>
 
                   <div className="relative group">
                     <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                    <input type="number" placeholder="Class (e.g. 10)" required value={form.class} onChange={(e) => setForm({ ...form, class: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium" />
+                    <input type="number" placeholder="Class (e.g. 10)" required value={form.class} onChange={(e) => setForm({ ...form, class: e.target.value })} className="login-input w-full pl-12 pr-4 h-14 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-1 focus:ring-blue-600 outline-none transition-all font-medium" />
                   </div>
 
                   <button type="submit" disabled={loading} className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-black text-lg shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-2 mt-4 active:scale-95">

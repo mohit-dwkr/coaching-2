@@ -181,7 +181,7 @@ export default function HeroManager() {
           <Card className="shadow-md border-primary/10">
             <CardHeader className="p-4 md:p-6 pb-2">
               <CardTitle className="text-lg md:text-xl flex items-center gap-2">
-                <Layout className="w-5 h-5 text-primary" /> Content Manager
+                <Layout className="w-5 h-5 text-primary" /> Content Management
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 md:p-6 space-y-5">
@@ -241,7 +241,7 @@ export default function HeroManager() {
                     className="flex-1"
                   />
                   <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                    {uploading ? <Loader2 className="animate-spin h-4 w-4" /> : <Upload className="w-4 h-4 mr-2" />} Upload
+                    {uploading ? <Loader2 className="animate-spin h-4 w-4" /> : <Upload className="w-4 h-4 mr-2" />} Upload From Device
                   </Button>
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
                 </div>
