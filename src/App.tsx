@@ -12,7 +12,7 @@ import Navbar from "./components/Navbar";
 import About from "./pages/About";
 import UserLogin from "./pages/UserLogin";
 import Dashboard from "./pages/Dashboard";
-
+import SetPassword from "./pages/SetPassword";
 const queryClient = new QueryClient();
 
 // 🔥 Scroll Logic: Ye function hash (#) dekh kar sahi jagah scroll karega
@@ -84,6 +84,7 @@ function LayoutContent() {
         <Route path="/userlogin" element={<UserLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about" element={<About />} />
+        <Route path="/set-password" element={<SetPassword />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       </div>

@@ -6,7 +6,6 @@ import {
   FileText,
   Trophy,
   Inbox,
-  Home,
   GraduationCap,
   User,
   Menu,
@@ -15,6 +14,7 @@ import {
   LogOut,
   Bell
 } from "lucide-react";
+import {toast} from "sonner"
 
 import { supabase } from "@/supabaseClient";
 import BatchManager from "@/components/admin/BatchManager";
@@ -26,7 +26,8 @@ import FacultyManager from "@/components/admin/facultyManager";
 import HeroManager from "@/components/admin/HeroManager";
 import VideosManager from "@/components/admin/VideosManager";
 import StudentManager from "@/components/admin/StudentManager";
-import NotificationSectionManager from "@/components/admin/NotificationSectionManager"
+import NotificationSectionManager from "@/components/admin/NotificationSectionManager";
+import AdminDrawer from "@/components/admin/AdminDrawer";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
@@ -44,6 +45,16 @@ const tabs = [
 
 type Tab = (typeof tabs)[number]["id"];
 
+type AdminRole = "owner" | "admin";
+
+interface AdminUser {
+  id: string;
+  email: string;
+  role: AdminRole;
+  status: string;
+  user_id: string;
+}
+
 const panels: Record<Tab, React.FC> = {
   batches: BatchManager,
   gallery: GalleryManager,
@@ -60,32 +71,69 @@ const panels: Record<Tab, React.FC> = {
 export default function Admin() {
   const [active, setActive] = useState<Tab>("Hero");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
+
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [currentAdmin, setCurrentAdmin] =
+    useState<AdminUser | null>(null);
+
   const navigate = useNavigate();
   const Panel = panels[active];
+
+  // ✅ Fetch All Admins
+  const fetchAdmins = async () => {
+    const { data, error } = await supabase
+      .from("admins")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setAdmins(data);
+    }
+  };
 
   // 🔐 Protect Admin Route
   useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (!data.user) {
+      if (!user) {
         navigate("/admin-login");
         return;
       }
 
+      // ✅ Verify admin
       const { data: adminData, error } = await supabase
         .from("admins")
-        .select("email")
-        .eq("email", data.user.email)
+        .select("*")
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (error || !adminData) {
+        await supabase.auth.signOut();
         navigate("/admin-login");
-      } else {
-        setLoading(false);
+        return;
       }
-    }
+
+      // ❌ Inactive admin
+      if (adminData.status !== "active") {
+        await supabase.auth.signOut();
+        navigate("/admin-login");
+        return;
+      }
+
+      setCurrentAdmin(adminData);
+
+      // ✅ Fetch admins list
+      await fetchAdmins();
+
+      setLoading(false);
+    };
+
     checkUser();
   }, [navigate]);
 
@@ -94,6 +142,104 @@ export default function Admin() {
     await supabase.auth.signOut();
     navigate("/admin-login");
   };
+
+  // ✅ Invite Admin
+const handleInvite = async (
+  email: string,
+  role: AdminRole
+) => {
+  try {
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const response = await fetch(
+      "https://pqsauuhrabzjsfpqcsqf.supabase.co/functions/v1/invite-admin",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          email,
+          role,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      toast.error(result.error || "Failed to invite admin");
+      return;
+    }
+
+    await fetchAdmins();
+
+    toast.success("Invite sent successfully");
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to invite admin");
+  }
+};
+
+  // ✅ Delete Admin
+ // ✅ Delete Admin
+const handleDelete = async (id: string) => {
+  try {
+
+    const adminToDelete = admins.find(
+      (admin) => admin.id === id
+    );
+
+    if (!adminToDelete) return;
+
+    // ❌ Prevent deleting owner
+    if (adminToDelete.role === "owner") {
+      toast.error("Owner cannot be deleted");
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const response = await fetch(
+      "https://pqsauuhrabzjsfpqcsqf.supabase.co/functions/v1/delete-admin",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          adminId: id,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      toast.error(
+        result.error ||
+          "Failed to delete admin"
+      );
+      return;
+    }
+
+    await fetchAdmins();
+
+    toast.success("Admin deleted successfully");
+
+  } catch (err) {
+    console.error(err);
+    toast.success("Failed to delete admin");
+  }
+};
 
   if (loading) {
     return (
@@ -134,7 +280,11 @@ export default function Admin() {
             <GraduationCap className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">Admin Panel</span>
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden">
+
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden"
+          >
             <X className="h-6 w-6" />
           </button>
         </div>
@@ -142,14 +292,16 @@ export default function Admin() {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {tabs.map((t) => {
             const IsActive = active === t.id;
+
             return (
               <button
                 key={t.id}
                 onClick={() => handleTabChange(t.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${IsActive
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
+                  IsActive
                     ? "bg-primary text-white"
                     : "text-slate-600 hover:bg-slate-100"
-                  }`}
+                }`}
               >
                 <t.icon className="h-5 w-5" />
                 {t.label}
@@ -183,9 +335,12 @@ export default function Admin() {
             Dashboard / {active}
           </h1>
 
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-slate-500" />
-          </div>
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition"
+          >
+            <User size={20} />
+          </button>
         </header>
 
         <main className="flex-1 overflow-y-auto bg-[#F8FAFC]">
@@ -194,6 +349,18 @@ export default function Admin() {
           </div>
         </main>
       </div>
+
+      {/* ✅ Admin Drawer */}
+      {currentAdmin && (
+        <AdminDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          currentAdmin={currentAdmin}
+          admins={admins}
+          onInvite={handleInvite}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   );
 }

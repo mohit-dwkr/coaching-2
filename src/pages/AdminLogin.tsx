@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient";
 import { GraduationCap, Loader2 } from "lucide-react";
@@ -8,27 +8,106 @@ export default function AdminLogin() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
   const [error, setError] = useState("");
 
+  // ✅ Check Existing Session
+  useEffect(() => {
+    const checkAdminSession = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setCheckingSession(false);
+        return;
+      }
+
+      // ✅ Verify admin access
+      const { data: adminData } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (adminData) {
+        navigate("/admin");
+      } else {
+        await supabase.auth.signOut();
+      }
+
+      setCheckingSession(false);
+    };
+
+    checkAdminSession();
+  }, [navigate]);
+
+  // ✅ Login Handler
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // ✅ Login
+    const { data, error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+    if (loginError || !data.user) {
       setError("Invalid email or password");
       setLoading(false);
       return;
     }
-console.log("Login Success! Redirecting now...");
+
+    // ✅ Verify admin exists
+    const { data: adminData, error: adminError } =
+      await supabase
+        .from("admins")
+        .select("*")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+    // ❌ Not an admin
+    if (adminError || !adminData) {
+      await supabase.auth.signOut();
+
+      setError("You are not authorized to access admin panel");
+      setLoading(false);
+      return;
+    }
+
+    // ❌ Inactive admin
+    if (adminData.status !== "active") {
+      await supabase.auth.signOut();
+
+      setError("Your admin access is inactive");
+      setLoading(false);
+      return;
+    }
+
+    // ✅ Success
     navigate("/admin");
   };
+
+  // ✅ Loading Screen
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="flex items-center gap-3 text-slate-600 font-medium">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Checking session...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 px-4">
@@ -41,9 +120,11 @@ console.log("Login Success! Redirecting now...");
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
           </div>
+
           <h2 className="text-2xl font-bold text-slate-800">
             Admin Login
           </h2>
+
           <p className="text-sm text-slate-500">
             Enter your credentials to access dashboard
           </p>
@@ -51,7 +132,7 @@ console.log("Login Success! Redirecting now...");
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm px-4 py-2 rounded-lg">
+          <div className="bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -59,13 +140,16 @@ console.log("Login Success! Redirecting now...");
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4">
 
+          {/* Email */}
           <div>
             <label className="text-sm font-medium text-slate-600">
               Email
             </label>
+
             <input
               type="email"
               required
+              autoComplete="email"
               className="w-full mt-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Enter admin email"
               value={email}
@@ -73,13 +157,16 @@ console.log("Login Success! Redirecting now...");
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="text-sm font-medium text-slate-600">
               Password
             </label>
+
             <input
               type="password"
               required
+              autoComplete="current-password"
               className="w-full mt-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Enter password"
               value={password}
@@ -87,10 +174,11 @@ console.log("Login Success! Redirecting now...");
             />
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2"
+            className="w-full bg-primary hover:bg-primary/90 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
