@@ -135,7 +135,7 @@ const AdminDrawer: React.FC<AdminDrawerProps> = ({
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 z-50 h-screen w-full sm:w-[420px] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${
+        className={`fixed top-0 right-0 z-50h-dvh w-full sm:w-[420px] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${
           isOpen
             ? "translate-x-0"
             : "translate-x-full"
